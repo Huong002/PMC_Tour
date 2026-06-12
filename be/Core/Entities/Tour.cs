@@ -7,6 +7,7 @@ public class Tour : BaseEntity
     public int TourTypeId { get; set; }
     public string Name { get; set; } = string.Empty;
     public string Slug { get; set; } = string.Empty;
+    public string Code { get; set; } = string.Empty;
     public int DurationDays { get; set; }
     public int DurationNights { get; set; }
     public string Location { get; set; } = string.Empty;
@@ -17,6 +18,7 @@ public class Tour : BaseEntity
     public decimal? SalePrice { get; set; }
     public bool IsActive { get; set; } = true;
     public bool IsFeatured { get; set; }
+    public string? ShortDescription { get; set; }
     public string? Description { get; set; }
     public string? Included { get; set; }
     public string? Excluded { get; set; }

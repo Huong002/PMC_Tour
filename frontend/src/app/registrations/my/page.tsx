@@ -72,11 +72,11 @@ export default function MyRegistrationsPage() {
   });
 
   const payMutation = useMutation({
-    mutationFn: (data: { registrationId: number; amount: number }) => 
+    mutationFn: (data: { bookingId: number; amount: number }) => 
       paymentService.create({
-        registrationId: data.registrationId,
+        bookingId: data.bookingId,
         amount: data.amount,
-        paymentMethod: 'CREDIT_CARD'
+        paymentMethod: 'BankTransfer'
       })
   });
 
@@ -85,7 +85,7 @@ export default function MyRegistrationsPage() {
     
     // Call payment API
     payMutation.mutate(
-      { registrationId: id, amount },
+      { bookingId: id, amount },
       {
         onSuccess: () => {
           refetch();
@@ -116,8 +116,8 @@ export default function MyRegistrationsPage() {
   };
 
   // Process API bookings
-  const apiItems = apiResponse?.data?.items || [];
-  const apiBookings = apiItems.map((reg) => {
+  const apiItems: any[] = apiResponse?.data?.items || [];
+  const apiBookings = apiItems.map((reg: any) => {
     const mockTour = MOCK_TOURS[reg.tourId] || MOCK_TOURS[1];
     const basePrice = mockTour.price;
     const travelersCount = 2; // Default mock guests count
@@ -182,7 +182,7 @@ export default function MyRegistrationsPage() {
             /* Modern Ledger: Horizontal Booking Cards */
             <div className="space-y-md">
               {finalBookings.length > 0 ? (
-                finalBookings.map((booking) => {
+                finalBookings.map((booking: any) => {
                   const isPaid = booking.status === 'Paid';
                   const isPending = booking.status === 'Pending Payment' || booking.status === 'Pending Approval';
                   

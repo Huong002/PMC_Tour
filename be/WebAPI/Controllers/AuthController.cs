@@ -1,7 +1,10 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Core.DTOs.Request;
+using Core.Entities;
 using Core.Interfaces;
+using Shared;
 
 namespace WebAPI.Controllers;
 
@@ -38,10 +41,30 @@ public class AuthController : ControllerBase
     }
 
     [Authorize]
+    [HttpGet("profile")]
+    public IActionResult GetProfile()
+    {
+        var user = HttpContext.Items["User"] as User;
+        if (user == null)
+            return Unauthorized(ApiResponse<string>.Fail("Not authenticated", 401));
+
+        return Ok(ApiResponse<object>.Ok(new
+        {
+            id = user.Id,
+            username = user.Username,
+            email = user.Email,
+            fullName = user.FullName,
+            phone = user.Phone,
+            role = user.UserRoles.FirstOrDefault()?.Role?.Name ?? "Customer",
+            roles = user.UserRoles.Select(ur => ur.Role.Name).ToList()
+        }));
+    }
+
+    [Authorize]
     [HttpPost("change-password")]
     public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
     {
-        var userId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
+        var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
         var result = await _authService.ChangePasswordAsync(userId, request);
         return StatusCode(result.StatusCode, result);
     }

@@ -1,12 +1,10 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '../../hooks/useAuth';
 
 export default function LoginPage() {
-  const router = useRouter();
   const { login, isLoggingIn } = useAuth();
 
   const [email, setEmail] = useState('');
@@ -20,7 +18,7 @@ export default function LoginPage() {
     setErrorMsg('');
     try {
       await login({ username: email, password });
-      router.push('/dashboard');
+      window.location.href = '/dashboard';
     } catch (err: any) {
       setErrorMsg(
         err.response?.data?.message ||

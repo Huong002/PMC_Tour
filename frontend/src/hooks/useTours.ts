@@ -41,18 +41,6 @@ export function useUpdateTour() {
   });
 }
 
-export function useUpdateTourStatus() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: ({ id, status }: { id: number; status: string }) =>
-      tourService.updateStatus(id, { status }),
-    onSuccess: (_, variables) => {
-      qc.invalidateQueries({ queryKey: TOURS_KEY });
-      qc.invalidateQueries({ queryKey: [...TOURS_KEY, variables.id] });
-    },
-  });
-}
-
 export function useDeleteTour() {
   const qc = useQueryClient();
   return useMutation({

@@ -60,13 +60,16 @@ public class ApplicationDbContext : DbContext
         modelBuilder.Entity<Tour>(e =>
         {
             e.HasIndex(x => x.Slug).IsUnique();
+            e.HasIndex(x => x.Code).IsUnique();
             e.Property(x => x.Name).HasMaxLength(200);
             e.Property(x => x.Slug).HasMaxLength(200);
+            e.Property(x => x.Code).HasMaxLength(50);
             e.Property(x => x.Location).HasMaxLength(200);
-            e.Property(x => x.Description).HasColumnType("ntext");
-            e.Property(x => x.Included).HasColumnType("ntext");
-            e.Property(x => x.Excluded).HasColumnType("ntext");
-            e.Property(x => x.Note).HasColumnType("ntext");
+            e.Property(x => x.ShortDescription).HasMaxLength(500);
+            e.Property(x => x.Description).HasColumnType("text");
+            e.Property(x => x.Included).HasColumnType("text");
+            e.Property(x => x.Excluded).HasColumnType("text");
+            e.Property(x => x.Note).HasColumnType("text");
             e.Property(x => x.Transportation).HasMaxLength(500);
             e.Property(x => x.Hotel).HasMaxLength(500);
             e.Property(x => x.PriceAdult).HasColumnType("decimal(18,2)");
@@ -160,7 +163,7 @@ public class ApplicationDbContext : DbContext
             e.Property(x => x.Excerpt).HasMaxLength(500);
             e.Property(x => x.Author).HasMaxLength(100);
             e.Property(x => x.ThumbnailUrl).HasMaxLength(500);
-            e.Property(x => x.Content).HasColumnType("ntext");
+            e.Property(x => x.Content).HasColumnType("text");
             e.Property(x => x.Tags).HasMaxLength(500);
         });
 
@@ -201,22 +204,6 @@ public class ApplicationDbContext : DbContext
         modelBuilder.Entity<User>().HasQueryFilter(x => !x.IsDeleted);
 
         // === Seed data ===
-        SeedData(modelBuilder);
-    }
-
-    private static void SeedData(ModelBuilder modelBuilder)
-    {
-        var now = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-
-        modelBuilder.Entity<Role>().HasData(
-            new Role { Id = 1, Name = "Admin", Description = "Administrator", CreatedAt = now },
-            new Role { Id = 2, Name = "Staff", Description = "Staff", CreatedAt = now },
-            new Role { Id = 3, Name = "Customer", Description = "Customer", CreatedAt = now }
-        );
-
-        modelBuilder.Entity<TourType>().HasData(
-            new TourType { Id = 1, Name = "Trong nước", Slug = "trong-nuoc", Description = "Tour du lịch trong nước", CreatedAt = now },
-            new TourType { Id = 2, Name = "Quốc tế", Slug = "quoc-te", Description = "Tour du lịch nước ngoài", CreatedAt = now }
-        );
+        PmcTourSeeder.SeedAll(modelBuilder);
     }
 }

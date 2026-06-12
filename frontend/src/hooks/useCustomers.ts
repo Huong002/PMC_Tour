@@ -41,20 +41,10 @@ export function useUpdateCustomer() {
   });
 }
 
-export function useToggleCustomerStatus() {
+export function useDeleteCustomer() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (id: number) => customerService.toggleStatus(id),
-    onSuccess: (_, id) => {
-      qc.invalidateQueries({ queryKey: CUSTOMERS_KEY });
-      qc.invalidateQueries({ queryKey: [...CUSTOMERS_KEY, id] });
-    },
-  });
-}
-
-export function useResetCustomerPassword() {
-  return useMutation({
-    mutationFn: ({ id, data }: { id: number; data: { newPassword: string } }) =>
-      customerService.resetPassword(id, data),
+    mutationFn: (id: number) => customerService.delete(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: CUSTOMERS_KEY }),
   });
 }

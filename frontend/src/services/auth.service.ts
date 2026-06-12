@@ -2,28 +2,24 @@ import api from './api';
 import { ApiResponse, UserDto } from '../types';
 
 export const authService = {
-  login: async (data: any) => {
-    const res = await api.post<ApiResponse<{ token: string; user: UserDto }>>('/auth/login', data);
+  login: async (data: { username: string; password: string }) => {
+    const res = await api.post<ApiResponse<{ token: string; refreshToken: string; userId: number; username: string; fullName: string; roles: string[] }>>('/Auth/login', data);
     return res.data;
   },
-  register: async (data: any) => {
-    const res = await api.post<ApiResponse<{ token: string; user: UserDto }>>('/auth/register', data);
+  register: async (data: { username: string; email: string; password: string; fullName: string; phone: string }) => {
+    const res = await api.post<ApiResponse<{ token: string; refreshToken: string; userId: number; username: string; fullName: string; roles: string[] }>>('/Auth/register', data);
     return res.data;
   },
-  logout: async () => {
-    const res = await api.post<ApiResponse<any>>('/auth/logout');
+  refresh: async (refreshToken: string) => {
+    const res = await api.post<ApiResponse<{ token: string; refreshToken: string }>>('/Auth/refresh', { refreshToken });
     return res.data;
   },
   getProfile: async () => {
-    const res = await api.get<ApiResponse<UserDto>>('/auth/profile');
+    const res = await api.get<ApiResponse<UserDto>>('/Auth/profile');
     return res.data;
   },
-  updateProfile: async (data: any) => {
-    const res = await api.put<ApiResponse<UserDto>>('/auth/profile', data);
-    return res.data;
-  },
-  changePassword: async (data: any) => {
-    const res = await api.put<ApiResponse<any>>('/auth/password', data);
+  changePassword: async (data: { oldPassword: string; newPassword: string }) => {
+    const res = await api.post<ApiResponse<boolean>>('/Auth/change-password', data);
     return res.data;
   },
 };

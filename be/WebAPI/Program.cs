@@ -1,8 +1,11 @@
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Npgsql;
 using Core.Extensions;
+using Infrastructure.Data;
 using Infrastructure.Extensions;
 using WebAPI.Middleware;
 
@@ -82,6 +85,44 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var config = scope.ServiceProvider.GetRequiredService<IConfiguration>();
+    var connStr = config.GetConnectionString("DefaultConnection")!;
+    var cb = new NpgsqlConnectionStringBuilder(connStr);
+    var targetDb = cb.Database!;
+
+    cb.Database = "postgres";
+    using var masterConn = new NpgsqlConnection(cb.ConnectionString);
+    await masterConn.OpenAsync();
+
+    using var checkCmd = new NpgsqlCommand(
+        "SELECT 1 FROM pg_database WHERE datname = @name", masterConn);
+    checkCmd.Parameters.AddWithValue("name", targetDb);
+    var exists = await checkCmd.ExecuteScalarAsync();
+
+    if (exists == null)
+    {
+        using var createCmd = new NpgsqlCommand(
+            $"CREATE DATABASE \"{targetDb}\"", masterConn);
+        await createCmd.ExecuteNonQueryAsync();
+    }
+
+    await masterConn.CloseAsync();
+
+    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    await db.Database.EnsureCreatedAsync();
+
+    // Override all seed user passwords to "123456" (dev only)
+    var allUsers = await db.Users.ToListAsync();
+    if (allUsers.Any())
+    {
+        var hash = BCrypt.Net.BCrypt.HashPassword("123456");
+        foreach (var u in allUsers) u.PasswordHash = hash;
+        await db.SaveChangesAsync();
+    }
+}
 
 // ===== Middleware Pipeline =====
 if (app.Environment.IsDevelopment())

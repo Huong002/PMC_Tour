@@ -1,45 +1,39 @@
 import api from './api';
 import { ApiResponse, RegistrationDto, RegistrationDetailDto, PaginatedResult } from '../types';
 
-export const registrationService = {
-  create: async (data: { tourId: number }) => {
-    const res = await api.post<ApiResponse<RegistrationDto>>('/registrations', data);
-    return res.data;
-  },
+export const bookingService = {
   getAll: async (params?: Record<string, any>) => {
-    const res = await api.get<ApiResponse<PaginatedResult<RegistrationDto>>>('/registrations', { params });
-    return res.data;
-  },
-  getMyRegistrations: async (params?: Record<string, any>) => {
-    const res = await api.get<ApiResponse<PaginatedResult<RegistrationDto>>>('/registrations/my', { params });
+    const res = await api.get<ApiResponse<PaginatedResult<RegistrationDto>>>('/Bookings', { params });
     return res.data;
   },
   getById: async (id: number) => {
-    const res = await api.get<ApiResponse<RegistrationDetailDto>>(`/registrations/${id}`);
+    const res = await api.get<ApiResponse<RegistrationDetailDto>>(`/Bookings/${id}`);
     return res.data;
   },
-  approve: async (id: number, data?: { note?: string }) => {
-    const res = await api.patch<ApiResponse<RegistrationDto>>(`/registrations/${id}/approve`, data);
+  create: async (data: { customerId: number; tourId: number; startDate: string; endDate: string; numAdults: number; numChildren: number; notes?: string; discountCode?: string }) => {
+    const res = await api.post<ApiResponse<RegistrationDto>>('/Bookings', data);
     return res.data;
   },
-  reject: async (id: number, data?: { note?: string }) => {
-    const res = await api.patch<ApiResponse<RegistrationDto>>(`/registrations/${id}/reject`, data);
+  updateStatus: async (id: number, status: number) => {
+    const res = await api.put<ApiResponse<RegistrationDto>>(`/Bookings/${id}/status`, status);
     return res.data;
   },
-  cancel: async (id: number, data: { reason: string }) => {
-    const res = await api.patch<ApiResponse<RegistrationDto>>(`/registrations/${id}/cancel`, data);
-    return res.data;
-  },
-  confirmParticipation: async (id: number) => {
-    const res = await api.patch<ApiResponse<RegistrationDto>>(`/registrations/${id}/confirm-participation`);
-    return res.data;
-  },
-  complete: async (id: number) => {
-    const res = await api.patch<ApiResponse<RegistrationDto>>(`/registrations/${id}/complete`);
-    return res.data;
-  },
-  noShow: async (id: number) => {
-    const res = await api.patch<ApiResponse<RegistrationDto>>(`/registrations/${id}/no-show`);
-    return res.data;
-  },
+};
+
+// Legacy alias for backward compatibility with existing pages
+export const registrationService = {
+  create: (data: { tourId: number }) => bookingService.create({
+    customerId: 0, tourId: data.tourId,
+    startDate: new Date().toISOString(), endDate: new Date().toISOString(),
+    numAdults: 1, numChildren: 0
+  }),
+  getAll: bookingService.getAll,
+  getMyRegistrations: (params?: Record<string, any>) => bookingService.getAll(params),
+  getById: bookingService.getById,
+  approve: async (id: number) => bookingService.updateStatus(id, 1),
+  reject: async (id: number) => bookingService.updateStatus(id, 4),
+  confirmParticipation: async (id: number) => bookingService.updateStatus(id, 2),
+  complete: async (id: number) => bookingService.updateStatus(id, 3),
+  noShow: async (id: number) => bookingService.updateStatus(id, 4),
+  cancel: async (id: number, _data: { reason: string }) => bookingService.updateStatus(id, 4),
 };
