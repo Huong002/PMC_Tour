@@ -103,6 +103,8 @@ public class BookingService : IBookingService
 
         var booking = _mapper.Map<Booking>(request);
         booking.BookingCode = GenerateBookingCode();
+        booking.TotalPrice = (request.NumAdults * tour.PriceAdult) + (request.NumChildren * tour.PriceChild);
+        booking.FinalPrice = booking.TotalPrice;
         booking.Status = BookingStatus.Pending;
         booking.CreatedBy = userId;
         booking.CreatedAt = DateTime.UtcNow;

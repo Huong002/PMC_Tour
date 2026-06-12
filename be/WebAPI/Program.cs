@@ -122,6 +122,14 @@ using (var scope = app.Services.CreateScope())
         foreach (var u in allUsers) u.PasswordHash = hash;
         await db.SaveChangesAsync();
     }
+
+    // Ensure Customer.UserId column exists (for old databases)
+    await db.Database.ExecuteSqlRawAsync(
+        "ALTER TABLE \"Customers\" ADD COLUMN IF NOT EXISTS \"UserId\" integer NULL");
+    await db.Database.ExecuteSqlRawAsync(
+        "CREATE INDEX IF NOT EXISTS IX_Customers_UserId ON \"Customers\" (\"UserId\")");
+    await db.Database.ExecuteSqlRawAsync(
+        "UPDATE \"Customers\" SET \"UserId\" = \"Id\" WHERE \"UserId\" IS NULL AND \"Id\" >= 3");
 }
 
 // ===== Middleware Pipeline =====

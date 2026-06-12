@@ -65,5 +65,8 @@ public class MappingProfile : Profile
             .ForAllMembers(o => o.Condition((_, _, src) => src != null));
 
         CreateMap<Payment, PaymentResponse>();
+
+        CreateMap<CreateContactRequest, ContactMessage>();
+        CreateMap<ContactMessage, ContactResponse>();
     }
 }
