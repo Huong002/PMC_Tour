@@ -117,12 +117,12 @@ public static class PmcTourSeeder
     private static void SeedCustomers(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Customer>().HasData(
-            new Customer { Id = 3, FullName = "Nguyễn Văn An", Email = "an.nguyen@gmail.com", Phone = "+84 903 456 789", Nationality = "Việt Nam", IsActive = true, CreatedAt = SeedDate },
-            new Customer { Id = 4, FullName = "Trần Văn Bình", Email = "binh.tran@gmail.com", Phone = "+84 904 567 890", Nationality = "Việt Nam", IsActive = false, CreatedAt = SeedDate },
-            new Customer { Id = 5, FullName = "Lê Văn Minh", Email = "minh.le@gmail.com", Phone = "+84 905 678 901", Nationality = "Việt Nam", IsActive = true, CreatedAt = SeedDate },
-            new Customer { Id = 6, FullName = "Phạm Văn Vũ", Email = "vu.pham@gmail.com", Phone = "+84 906 789 012", Nationality = "Việt Nam", IsActive = true, CreatedAt = SeedDate },
-            new Customer { Id = 7, FullName = "Hoàng Thị Ánh", Email = "anh.hoang@gmail.com", Phone = "+84 907 890 123", Nationality = "Việt Nam", IsActive = true, CreatedAt = SeedDate },
-            new Customer { Id = 8, FullName = "Trần Thị Thu", Email = "thu.tran@gmail.com", Phone = "+84 908 901 234", Nationality = "Việt Nam", IsActive = true, CreatedAt = SeedDate }
+            new Customer { Id = 3, UserId = 3, FullName = "Nguyễn Văn An",    Email = "an.nguyen@gmail.com",   Phone = "+84 903 456 789", Nationality = "Việt Nam", IsActive = true,  CreatedAt = SeedDate },
+            new Customer { Id = 4, UserId = 4, FullName = "Trần Văn Bình",    Email = "binh.tran@gmail.com",   Phone = "+84 904 567 890", Nationality = "Việt Nam", IsActive = false, CreatedAt = SeedDate },
+            new Customer { Id = 5, UserId = 5, FullName = "Lê Văn Minh",      Email = "minh.le@gmail.com",     Phone = "+84 905 678 901", Nationality = "Việt Nam", IsActive = true,  CreatedAt = SeedDate },
+            new Customer { Id = 6, UserId = 6, FullName = "Phạm Văn Vũ",      Email = "vu.pham@gmail.com",     Phone = "+84 906 789 012", Nationality = "Việt Nam", IsActive = true,  CreatedAt = SeedDate },
+            new Customer { Id = 7, UserId = 7, FullName = "Hoàng Thị Ánh",    Email = "anh.hoang@gmail.com",   Phone = "+84 907 890 123", Nationality = "Việt Nam", IsActive = true,  CreatedAt = SeedDate },
+            new Customer { Id = 8, UserId = 8, FullName = "Trần Thị Thu",     Email = "thu.tran@gmail.com",    Phone = "+84 908 901 234", Nationality = "Việt Nam", IsActive = true,  CreatedAt = SeedDate }
         );
     }
 

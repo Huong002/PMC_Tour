@@ -88,4 +88,30 @@ public class CustomerService : ICustomerService
 
         return ApiResponse<bool>.Ok(true, "Customer deleted successfully");
     }
+
+    public async Task<ApiResponse<CustomerResponse>> GetCurrentCustomerAsync(int userId)
+    {
+        var user = await _unitOfWork.Users.GetByIdAsync(userId);
+        if (user == null)
+            return ApiResponse<CustomerResponse>.Fail("User not found", 404);
+
+        var customer = await _unitOfWork.Customers.GetQueryable()
+            .FirstOrDefaultAsync(c => c.Email == user.Email && !c.IsDeleted);
+
+        if (customer == null)
+        {
+            customer = new Customer
+            {
+                FullName = user.FullName,
+                Email = user.Email,
+                Phone = user.Phone,
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow
+            };
+            await _unitOfWork.Customers.AddAsync(customer);
+            await _unitOfWork.SaveChangesAsync();
+        }
+
+        return ApiResponse<CustomerResponse>.Ok(_mapper.Map<CustomerResponse>(customer));
+    }
 }

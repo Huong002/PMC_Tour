@@ -22,6 +22,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<BlogCategory> BlogCategories => Set<BlogCategory>();
     public DbSet<Itinerary> Itineraries => Set<Itinerary>();
     public DbSet<Payment> Payments => Set<Payment>();
+    public DbSet<ContactMessage> ContactMessages => Set<ContactMessage>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -133,6 +134,7 @@ public class ApplicationDbContext : DbContext
             e.Property(x => x.Nationality).HasMaxLength(50);
             e.HasIndex(x => x.Email);
             e.HasIndex(x => x.Phone);
+            e.HasOne(x => x.User).WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.SetNull);
         });
 
         // === Discount ===
@@ -192,6 +194,15 @@ public class ApplicationDbContext : DbContext
             e.Property(x => x.Note).HasMaxLength(500);
             e.HasOne(x => x.Booking).WithMany(x => x.Payments).HasForeignKey(x => x.BookingId).OnDelete(DeleteBehavior.Cascade);
             e.HasOne(x => x.CreatedByUser).WithMany().HasForeignKey(x => x.CreatedBy).OnDelete(DeleteBehavior.NoAction);
+        });
+
+        // === ContactMessage ===
+        modelBuilder.Entity<ContactMessage>(e =>
+        {
+            e.Property(x => x.Name).HasMaxLength(100);
+            e.Property(x => x.Email).HasMaxLength(100);
+            e.Property(x => x.Subject).HasMaxLength(200);
+            e.Property(x => x.Message).HasColumnType("text");
         });
 
         // === Global query filters ===

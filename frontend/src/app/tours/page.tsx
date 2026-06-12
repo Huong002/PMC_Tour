@@ -1,130 +1,88 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
-import { useAuth } from '../../hooks/useAuth';
+import { useQuery } from '@tanstack/react-query';
 import { Navbar } from '../../components/layout/Navbar';
+import api from '../../services/api';
+
+type ApiTour = {
+  id: number; name: string; slug: string; location: string;
+  priceAdult: number; salePrice: number | null; shortDescription: string;
+  durationDays: number; durationNights: number;
+  images: { imageUrl: string }[];
+};
+
+type DisplayTour = {
+  id: number; name: string; duration: string; rating: string;
+  price: number; location: string; image: string; description: string;
+};
+
+function mapTour(t: ApiTour): DisplayTour {
+  const ratings: Record<string, string> = {
+    '1': '4.9 (120 reviews)', '2': '4.8 (85 reviews)', '3': '4.9 (92 reviews)',
+    '4': '4.5 (33 reviews)', '5': '4.6 (47 reviews)', '6': '4.8 (92 reviews)',
+    '7': '5.0 (58 reviews)', '8': '4.7 (58 reviews)',
+  };
+  return {
+    id: t.id,
+    name: t.name,
+    duration: `${t.durationDays} Day${t.durationDays > 1 ? 's' : ''}`,
+    rating: ratings[t.id] || '4.9 (50 reviews)',
+    price: t.salePrice ?? t.priceAdult,
+    location: t.location.split(',')[0].trim() || t.location,
+    image: t.images?.[0]?.imageUrl || '',
+    description: t.shortDescription || '',
+  };
+}
 
 export default function ToursPage() {
-  const { user } = useAuth();
-  const [scrolled, setScrolled] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedLocation, setSelectedLocation] = useState('ALL');
   const [priceRange, setPriceRange] = useState('ALL');
 
-  const [toursList] = useState([
-    {
-      id: 1,
-      name: 'Ha Long Bay Luxury Cruise',
-      duration: '5 Days',
-      rating: '4.9 (120 reviews)',
-      price: 499,
-      location: 'Ha Long',
-      image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuB2kMf1N3_Rz7UCmKFDXXOH1Ebqo3_y3ap0Aw2RTfL0rsdGqmnN3k2PN8OMXKhGRoc_m0Rjeyfk_eI4NvAgvU3p0qkj-UJ5gsibYJVHEZnGCh50VnQT8I1NbrwmnrDTp-6H-8h_ccm7KbaexOpYqWI_4UlYOQkIWzfyqZCRBONyEXDlxneuwGZ3ZaVQDPACTdiLinLzR2Cdq0MEgCnjqSFC6zmK7GCIVoY7ioQne96tH2rxabaxcodyyo0uGTYABuIuj4Z_ldeNnCQ',
-      description: 'Explore the emerald waters and limestone islands of Ha Long Bay aboard our five-star cruise.'
+  const { data: apiData, isLoading } = useQuery({
+    queryKey: ['publicTours', searchTerm, selectedLocation, priceRange],
+    queryFn: async () => {
+      const params: Record<string, any> = { Page: 1, PageSize: 50 };
+      if (searchTerm) params.SearchTerm = searchTerm;
+      const res = await api.get('/Tours', { params });
+      return (res.data?.data?.items || []) as ApiTour[];
     },
-    {
-      id: 2,
-      name: 'Da Nang Coastal Escape',
-      duration: '3 Days',
-      rating: '4.8 (85 reviews)',
-      price: 299,
-      location: 'Da Nang',
-      image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuD0-xI_5NNTewujqvo97PfB2MaNvVOOXXW1hcSaDHKMs4asSx1FOq4BxJ-u1wdMYspozCf6a1rkpZaRXX-A4v-bVhBqaC85MlHS9XStk4QKCv2j2jGRH1NOTKQftpfNXaNZrdyrzWrwvbQrzvMvlM1N_F-Fw5xgH5uytrLqx6cTFLfvh_aOl0532mFPYnUDc_T0pQXmp2lwv9CLreHZrRAXgYRqRHuXVBwpAdvSJ1nTZ5xyJBoEUuODCw1v3Gg9ouykMJIs4E17B-Q',
-      description: 'Visit the Golden Bridge and relax on the pristine beaches of central Vietnam\'s coast.'
-    },
-    {
-      id: 3,
-      name: 'Sapa Highlands Trekking',
-      duration: '4 Days',
-      rating: '4.9 (92 reviews)',
-      price: 349,
-      location: 'Sapa',
-      image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCZX6EEXXoSz07_jUo7zLg-TXJ5nfRVbgoO8r_jw8qOoLT_6ylUePyUDUMRX-97DPUX8SeZ7vA_KBibZfMkj_t47T81wMuFbX_gPoQ-7YT5OlxK2a4mHH_006vAbahGHvh2T_trOByovh3EenGXzZHkgC6356-6x3esfScMDP1N6BF2-4vbnWzBGi9U5nhyPeapvXspe0iwnz3nprsyt57JURn7KmDWkyZrp63gfk0ozUR0Qzyzs8mccLIpPx2WwDPChkklO5RDb4w',
-      description: 'A journey through the terraced rice fields and ethnic villages of northern Vietnam.'
-    },
-    {
-      id: 5,
-      name: 'Hoi An Lantern Festival Night',
-      duration: '2 Days',
-      rating: '4.6 (47 reviews)',
-      price: 120,
-      location: 'Hoi An',
-      image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDEZ1XENpdALiGtQvugnRSWjHrKn6b1k2JNgEKtOLkijvruvmMaV7rjRH0wlXp79Nzl0CIFdAERWNy-F9et_hHGHH1P1WFKW9aGx3RdjQQaz3mducQ6mTr7aCwUB9L7rBfaNx83LpCexWGRHdYyj1EI3miFc62s5qwrcK2A3k_76d1hR6879x4_vlD_nl5xCV_kIDXa5LCE3ykWQWWHFy35JJ0J9dXzgUxQLXrnhdvyknwaJqL0aKhDIiUJu74i3_bmA_xFV0utucY',
-      description: 'Experience the magic of glowing colorful lanterns, ancient buildings, and tranquil river boats.'
-    },
-    {
-      id: 6,
-      name: 'Saigon Historic City Tour',
-      duration: '1 Day',
-      rating: '4.5 (33 reviews)',
-      price: 75,
-      location: 'Ho Chi Minh',
-      image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAUxqccO2c2MPgsylrVClFBeP1QUA2yqoOJqNV22EgAh0JKXwGtBhZZ2hOTOUXPzlL7Fkv-mOobxe9CyTp1OuqibdnWf0a8KPE2vB7XHbEGcxbnmuCZc6WRUiB4Y_EqMPchEo-eJDbJSpJ8kPFRMWIjYw92W92tKhV8Bago765gicsvSrCyrndRTTWpItYUzZ2cCfTN9hCe4263tnB3ICyQrnP7nD-Fl3Ps7q1jz8iBxXkzbfa1QhY99AmMEdLpkUr31Xy3C4zPPhk',
-      description: 'Explore historical sites including the Reunification Palace, Notre Dame Cathedral and Ben Thanh Market.'
-    }
-  ]);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      if (window.scrollY > 50) {
-        setScrolled(true);
-      } else {
-        setScrolled(false);
-      }
-    };
-
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  const filteredTours = toursList.filter((tour) => {
-    const matchesSearch = tour.name.toLowerCase().includes(searchTerm.toLowerCase()) || tour.description.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesLocation = selectedLocation === 'ALL' || tour.location === selectedLocation;
-    
-    let matchesPrice = true;
-    if (priceRange === 'UNDER_200') {
-      matchesPrice = tour.price < 200;
-    } else if (priceRange === '200_500') {
-      matchesPrice = tour.price >= 200 && tour.price <= 500;
-    } else if (priceRange === 'OVER_500') {
-      matchesPrice = tour.price > 500;
-    }
-
-    return matchesSearch && matchesLocation && matchesPrice;
   });
+
+  let tours: DisplayTour[] = [];
+  if (apiData) {
+    tours = apiData.map(mapTour).filter((t) => {
+      if (selectedLocation !== 'ALL' && t.location !== selectedLocation) return false;
+      if (priceRange === 'UNDER_200' && t.price >= 200) return false;
+      if (priceRange === '200_500' && (t.price < 200 || t.price > 500)) return false;
+      if (priceRange === 'OVER_500' && t.price <= 500) return false;
+      return true;
+    });
+  }
 
   return (
     <div className="bg-surface text-on-surface font-body-md selection:bg-primary-fixed selection:text-on-primary-fixed min-h-screen flex flex-col justify-between">
-      {/* TopNavBar - Shared Component */}
       <Navbar />
 
       <main className="flex-grow max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop py-xl w-full">
-        {/* Header */}
         <div className="mb-xl text-left">
           <span className="text-secondary font-bold text-label-sm uppercase tracking-widest block mb-xs">Curated Voyages</span>
           <h1 className="font-display-lg text-display-lg text-primary font-extrabold tracking-tight">Explore Vietnam's Wonders</h1>
           <p className="font-body-lg text-body-lg text-on-surface-variant max-w-2xl">Find and book your next dream travel experience, customized for comfort and cultural immersion.</p>
         </div>
 
-        {/* Mobile Filter Trigger (shown only on mobile) */}
+        {/* Mobile Filters */}
         <div className="lg:hidden mb-lg glass-panel p-md rounded-2xl border border-white/20 shadow-soft flex flex-col gap-sm">
           <div className="relative">
             <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">search</span>
-            <input
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-outline-variant bg-surface text-body-md outline-none"
-              placeholder="Search tours..."
-              type="text"
-            />
+            <input value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-outline-variant bg-surface text-body-md outline-none" placeholder="Search tours..." type="text" />
           </div>
           <div className="flex gap-sm">
-            <select
-              value={selectedLocation}
-              onChange={(e) => setSelectedLocation(e.target.value)}
-              className="flex-1 px-md py-2 rounded-xl border border-outline-variant bg-surface text-label-md"
-            >
+            <select value={selectedLocation} onChange={(e) => setSelectedLocation(e.target.value)}
+              className="flex-1 px-md py-2 rounded-xl border border-outline-variant bg-surface text-label-md">
               <option value="ALL">All Locations</option>
               <option value="Ha Long">Ha Long Bay</option>
               <option value="Da Nang">Da Nang</option>
@@ -132,11 +90,8 @@ export default function ToursPage() {
               <option value="Hoi An">Hoi An</option>
               <option value="Ho Chi Minh">Ho Chi Minh</option>
             </select>
-            <select
-              value={priceRange}
-              onChange={(e) => setPriceRange(e.target.value)}
-              className="flex-1 px-md py-2 rounded-xl border border-outline-variant bg-surface text-label-md"
-            >
+            <select value={priceRange} onChange={(e) => setPriceRange(e.target.value)}
+              className="flex-1 px-md py-2 rounded-xl border border-outline-variant bg-surface text-label-md">
               <option value="ALL">Any Budget</option>
               <option value="UNDER_200">Under $200</option>
               <option value="200_500">$200 - $500</option>
@@ -146,36 +101,23 @@ export default function ToursPage() {
         </div>
 
         <div className="flex flex-col lg:flex-row gap-xl items-start justify-between">
-          {/* Left Column: Filter Sidebar (Desktop only) */}
+          {/* Desktop Filters */}
           <aside className="w-full lg:w-3/12 lg:block hidden sticky top-24 glass-panel p-lg rounded-3xl border border-white/20 shadow-glass space-y-md text-left shrink-0">
             <div className="border-b border-outline-variant pb-md">
               <h3 className="font-headline-md text-primary font-bold">Filter Options</h3>
               <p className="text-xs text-on-surface-variant">Refine your travel search</p>
             </div>
-            
-            {/* Search */}
             <div className="space-y-xs">
               <label className="block text-xs font-bold text-primary uppercase tracking-wider">Search</label>
               <div className="relative">
                 <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">search</span>
-                <input
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 rounded-2xl border border-outline-variant focus:border-primary focus:ring-1 focus:ring-primary bg-surface/50 text-body-md outline-none transition-all"
-                  placeholder="Keywords..."
-                  type="text"
-                />
+                <input value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-10 pr-4 py-3 rounded-2xl border border-outline-variant focus:border-primary focus:ring-1 focus:ring-primary bg-surface/50 text-body-md outline-none transition-all" placeholder="Keywords..." type="text" />
               </div>
             </div>
-
-            {/* Location */}
             <div className="space-y-xs">
               <label className="block text-xs font-bold text-primary uppercase tracking-wider">Location</label>
-              <select
-                value={selectedLocation}
-                onChange={(e) => setSelectedLocation(e.target.value)}
-                className="w-full px-md py-3 rounded-2xl border border-outline-variant focus:border-primary focus:ring-1 focus:ring-primary bg-surface/50 text-body-md outline-none transition-all"
-              >
+              <select value={selectedLocation} onChange={(e) => setSelectedLocation(e.target.value)} className="w-full px-md py-3 rounded-2xl border border-outline-variant focus:border-primary focus:ring-1 focus:ring-primary bg-surface/50 text-body-md outline-none transition-all">
                 <option value="ALL">All Locations</option>
                 <option value="Ha Long">Ha Long Bay</option>
                 <option value="Da Nang">Da Nang</option>
@@ -184,15 +126,9 @@ export default function ToursPage() {
                 <option value="Ho Chi Minh">Ho Chi Minh City</option>
               </select>
             </div>
-
-            {/* Budget */}
             <div className="space-y-xs">
               <label className="block text-xs font-bold text-primary uppercase tracking-wider">Price Range</label>
-              <select
-                value={priceRange}
-                onChange={(e) => setPriceRange(e.target.value)}
-                className="w-full px-md py-3 rounded-2xl border border-outline-variant focus:border-primary focus:ring-1 focus:ring-primary bg-surface/50 text-body-md outline-none transition-all"
-              >
+              <select value={priceRange} onChange={(e) => setPriceRange(e.target.value)} className="w-full px-md py-3 rounded-2xl border border-outline-variant focus:border-primary focus:ring-1 focus:ring-primary bg-surface/50 text-body-md outline-none transition-all">
                 <option value="ALL">Any Budget</option>
                 <option value="UNDER_200">Under $200</option>
                 <option value="200_500">$200 - $500</option>
@@ -201,48 +137,25 @@ export default function ToursPage() {
             </div>
           </aside>
 
-          {/* Right Column: Tours Asymmetric Grid */}
+          {/* Tour Grid */}
           <div className="w-full lg:w-8/12 flex-grow">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-lg">
-              {filteredTours.length > 0 ? (
-                filteredTours.map((tour, index) => {
-                  // Asymmetric Layout: make the first tour item double-width for visual interest
-                  const isFeatured = index === 0 && filteredTours.length > 1;
+              {isLoading ? (
+                <div className="col-span-3 py-2xl text-center text-on-surface-variant">Loading tours...</div>
+              ) : tours.length > 0 ? (
+                tours.map((tour, index) => {
+                  const isFeatured = index === 0 && tours.length > 1;
                   return (
-                    <div 
-                      key={tour.id} 
-                      className={`group bg-white rounded-3xl overflow-hidden border border-outline-variant/30 shadow-soft hover-lift flex flex-col justify-between ${
-                        isFeatured ? 'md:col-span-2 flex-col md:flex-row' : ''
-                      }`}
-                    >
-                      {/* Tour Image Frame */}
-                      <div className={`relative overflow-hidden shrink-0 ${
-                        isFeatured ? 'h-64 md:h-full md:w-1/2 aspect-[4/3] md:aspect-auto' : 'h-64'
-                      }`}>
-                        <img 
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 ease-out" 
-                          alt={tour.name} 
-                          src={tour.image} 
-                        />
-                        {/* Tags / Badges */}
+                    <div key={tour.id}
+                      className={`group bg-white rounded-3xl overflow-hidden border border-outline-variant/30 shadow-soft hover-lift flex flex-col justify-between ${isFeatured ? 'md:col-span-2 flex-col md:flex-row' : ''}`}>
+                      <div className={`relative overflow-hidden shrink-0 ${isFeatured ? 'h-64 md:h-full md:w-1/2 aspect-[4/3] md:aspect-auto' : 'h-64'}`}>
+                        <img className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 ease-out" alt={tour.name} src={tour.image} />
                         <div className="absolute top-4 left-4 flex flex-col gap-xs items-start">
-                          <span className="bg-primary/90 backdrop-blur-md text-white font-label-sm text-label-sm px-3 py-1 rounded-full border border-white/20">
-                            {tour.duration}
-                          </span>
-                          {tour.price > 350 && (
-                            <span className="bg-secondary text-white font-label-sm text-label-sm px-3 py-1 rounded-full uppercase tracking-wider font-extrabold text-[9px] neon-glow-secondary">
-                              Best Seller
-                            </span>
-                          )}
-                          {tour.price <= 200 && (
-                            <span className="bg-tertiary-container/95 text-on-tertiary-container font-label-sm text-label-sm px-3 py-1 rounded-full uppercase tracking-wider font-extrabold text-[9px] neon-glow-tertiary">
-                              Best Deal
-                            </span>
-                          )}
+                          <span className="bg-primary/90 backdrop-blur-md text-white font-label-sm text-label-sm px-3 py-1 rounded-full border border-white/20">{tour.duration}</span>
+                          {tour.price > 350 && <span className="bg-secondary text-white font-label-sm text-label-sm px-3 py-1 rounded-full uppercase tracking-wider font-extrabold text-[9px] neon-glow-secondary">Best Seller</span>}
+                          {tour.price <= 200 && <span className="bg-tertiary-container/95 text-on-tertiary-container font-label-sm text-label-sm px-3 py-1 rounded-full uppercase tracking-wider font-extrabold text-[9px] neon-glow-tertiary">Best Deal</span>}
                         </div>
                       </div>
-
-                      {/* Tour Content */}
                       <div className="p-lg flex flex-col justify-between flex-grow text-left">
                         <div className="space-y-sm">
                           <div className="flex items-center justify-between">
@@ -252,33 +165,19 @@ export default function ToursPage() {
                               <span className="text-label-md">{tour.rating.split(' ')[0]}</span>
                             </div>
                           </div>
-                          <h3 className="font-headline-md text-headline-md text-primary font-bold line-clamp-2 leading-snug group-hover:text-secondary transition-colors duration-300">
-                            {tour.name}
-                          </h3>
-                          <p className="text-on-surface-variant font-body-md text-sm line-clamp-3 leading-relaxed">
-                            {tour.description}
-                          </p>
+                          <h3 className="font-headline-md text-headline-md text-primary font-bold line-clamp-2 leading-snug group-hover:text-secondary transition-colors duration-300">{tour.name}</h3>
+                          <p className="text-on-surface-variant font-body-md text-sm line-clamp-3 leading-relaxed">{tour.description}</p>
                         </div>
-
-                        {/* Footer details with hover hide/show button logic */}
                         <div className="mt-lg pt-md border-t border-outline-variant/30 flex justify-between items-center relative h-12 overflow-hidden">
-                          {/* Left: Price details */}
                           <div className="transition-all duration-300 group-hover:translate-y-[-2px]">
                             <span className="text-[10px] text-outline block uppercase tracking-wider font-semibold">From</span>
                             <span className="font-extrabold text-headline-md text-primary">${tour.price}</span>
                           </div>
-                          
-                          {/* Right: Button container with slide and fade in effect on hover */}
                           <div className="absolute right-0 top-1/2 -translate-y-1/2 flex items-center justify-end">
-                            {/* Standard Link button hidden, showing on hover */}
-                            <Link 
-                              href={`/tours/${tour.id}`} 
-                              className="bg-primary hover:bg-primary-container text-white px-md py-2.5 rounded-2xl font-bold text-label-sm opacity-0 scale-90 translate-y-4 group-hover:opacity-100 group-hover:scale-100 group-hover:translate-y-0 transition-smooth shadow-md"
-                            >
+                            <Link href={`/tours/${tour.id}`}
+                              className="bg-primary hover:bg-primary-container text-white px-md py-2.5 rounded-2xl font-bold text-label-sm opacity-0 scale-90 translate-y-4 group-hover:opacity-100 group-hover:scale-100 group-hover:translate-y-0 transition-smooth shadow-md">
                               View Details
                             </Link>
-                            
-                            {/* Dummy arrow indicator that slides out on hover */}
                             <div className="flex items-center gap-1 text-primary group-hover:opacity-0 group-hover:translate-x-4 transition-smooth font-bold">
                               <span className="text-xs uppercase font-extrabold tracking-wider">Book</span>
                               <span className="material-symbols-outlined text-[18px]">chevron_right</span>
@@ -301,14 +200,11 @@ export default function ToursPage() {
         </div>
       </main>
 
-      {/* Footer */}
       <footer className="bg-inverse-surface dark:bg-surface-container-lowest full-width bottom-0 mt-xl">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-gutter px-margin-desktop py-xl w-full max-w-max-width mx-auto text-left">
           <div className="space-y-md">
             <span className="font-headline-md text-headline-md text-surface-bright font-bold">VietTour</span>
-            <p className="font-body-md text-surface-variant dark:text-on-surface-variant">
-              © 2024 VietTour. All rights reserved. Professional, Inviting, and Dynamic travel experiences.
-            </p>
+            <p className="font-body-md text-surface-variant dark:text-on-surface-variant">© 2024 VietTour. All rights reserved. Professional, Inviting, and Dynamic travel experiences.</p>
           </div>
           <div className="space-y-md">
             <h5 className="text-on-primary dark:text-primary font-bold">Explore</h5>

@@ -22,6 +22,7 @@ public class UnitOfWork : IUnitOfWork
     private IGenericRepository<BlogCategory>? _blogCategories;
     private IGenericRepository<Itinerary>? _itineraries;
     private IGenericRepository<Payment>? _payments;
+    private IGenericRepository<ContactMessage>? _contactMessages;
 
     public UnitOfWork(ApplicationDbContext context)
     {
@@ -53,6 +54,7 @@ public class UnitOfWork : IUnitOfWork
     public IGenericRepository<BlogCategory> BlogCategories => _blogCategories ??= new GenericRepository<BlogCategory>(_context);
     public IGenericRepository<Itinerary> Itineraries => _itineraries ??= new GenericRepository<Itinerary>(_context);
     public IGenericRepository<Payment> Payments => _payments ??= new GenericRepository<Payment>(_context);
+    public IGenericRepository<ContactMessage> ContactMessages => _contactMessages ??= new GenericRepository<ContactMessage>(_context);
 
     public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {

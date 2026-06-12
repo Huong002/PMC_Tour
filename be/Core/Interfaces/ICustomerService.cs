@@ -11,4 +11,5 @@ public interface ICustomerService
     Task<ApiResponse<CustomerResponse>> CreateAsync(CreateCustomerRequest request);
     Task<ApiResponse<CustomerResponse>> UpdateAsync(int id, UpdateCustomerRequest request);
     Task<ApiResponse<bool>> DeleteAsync(int id);
+    Task<ApiResponse<CustomerResponse>> GetCurrentCustomerAsync(int userId);
 }

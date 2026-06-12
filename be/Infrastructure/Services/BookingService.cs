@@ -52,6 +52,29 @@ public class BookingService : IBookingService
             new PagedResult<BookingResponse>(data, total, filter.Page, filter.PageSize));
     }
 
+    public async Task<ApiResponse<PagedResult<BookingResponse>>> GetMyBookingsAsync(int userId, int page, int pageSize)
+    {
+        var customer = await _unitOfWork.Customers.FirstOrDefaultAsync(c => c.UserId == userId);
+        if (customer == null)
+            return ApiResponse<PagedResult<BookingResponse>>.Ok(new PagedResult<BookingResponse>());
+
+        var query = _unitOfWork.Bookings.GetQueryable()
+            .Include(b => b.Customer)
+            .Include(b => b.Tour)
+            .Where(b => b.CustomerId == customer.Id);
+
+        var total = await query.CountAsync();
+        var items = await query
+            .OrderByDescending(b => b.CreatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        var data = _mapper.Map<List<BookingResponse>>(items);
+        return ApiResponse<PagedResult<BookingResponse>>.Ok(
+            new PagedResult<BookingResponse>(data, total, page, pageSize));
+    }
+
     public async Task<ApiResponse<BookingResponse>> GetByIdAsync(int id)
     {
         var booking = await _unitOfWork.Bookings.GetQueryable()

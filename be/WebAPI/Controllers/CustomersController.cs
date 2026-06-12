@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Core.DTOs.Request;
@@ -49,6 +50,14 @@ public class CustomersController : ControllerBase
     public async Task<IActionResult> Delete(int id)
     {
         var result = await _customerService.DeleteAsync(id);
+        return StatusCode(result.StatusCode, result);
+    }
+
+    [HttpGet("current")]
+    public async Task<IActionResult> GetCurrent()
+    {
+        var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+        var result = await _customerService.GetCurrentCustomerAsync(userId);
         return StatusCode(result.StatusCode, result);
     }
 }

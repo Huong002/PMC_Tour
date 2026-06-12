@@ -22,4 +22,8 @@ export const customerService = {
     const res = await api.delete<ApiResponse<any>>(`/Customers/${id}`);
     return res.data;
   },
+  getCurrent: async () => {
+    const res = await api.get<ApiResponse<{ id: number; fullName: string; email: string; phone: string }>>('/Customers/current');
+    return res.data;
+  },
 };

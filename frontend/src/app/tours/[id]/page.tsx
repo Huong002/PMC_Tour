@@ -4,58 +4,11 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { tourService } from '../../../services/tour.service';
-import { registrationService } from '../../../services/registration.service';
+import { bookingService } from '../../../services/registration.service';
+import { customerService } from '../../../services/customer.service';
 import { useAuth } from '../../../hooks/useAuth';
 import { Navbar } from '../../../components/layout/Navbar';
-
-const MOCK_TOURS: Record<number, any> = {
-  1: {
-    id: 1,
-    title: 'Khám phá Vịnh Hạ Long',
-    location: 'Quảng Ninh, Việt Nam',
-    price: 499,
-    description: 'Embark on a journey through the emerald waters of Ha Long Bay, a UNESCO World Heritage site known for its thousands of towering limestone karsts and isles. Our luxury cruise offers a perfect blend of adventure and relaxation. You\'ll explore hidden caves, kayak through serene lagoons, and enjoy world-class dining on the deck while watching the sunset over the horizon. This curated 5-day experience is designed for travelers who seek both the thrill of discovery and the comfort of high-end hospitality.',
-    duration: '5 Days 4 Nights',
-    maxParticipants: 12,
-    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBnkKOq8bpCkA4g-NqpHUVmalVLBqmHh54K-4tD-wOm9boN4YfzqpKD8pViy16eesF7PwqJo74bUWg99vNAUxVDG9LENaJYpXlCXIlOLVkbm5hJqMeTSYSTlr12dapfq2jcx2a-0gs_8Vnrr7PnW2jYt49WSGczMyZUK5oTTV3xMz31457QrXDyvSFo2-98IJEC5QWpczPfJffe1IiLCEv_nfo7ASPce3kx9KFRKZzUVCRaWPPigB8KChwc6SKg8NOdhFCDbkhFZXU',
-    itinerary: [
-      { day: 1, title: 'Day 1: Arrival & Welcome Cruise', desc: 'Pickup from Hanoi Old Quarter and transfer to Ha Long Bay. Check-in on our luxury junk boat and enjoy a welcome lunch while cruising into the bay.' },
-      { day: 2, title: 'Day 2: Cave Exploration & Kayaking', desc: 'Morning visit to Sung Sot Cave (Surprise Cave), the largest in the bay. Afternoon kayaking at Luon Cave or swimming at Ti Top Island beach.' },
-      { day: 3, title: 'Day 3: Floating Villages & Pearl Farms', desc: 'Visit a local floating village to learn about the traditional life of fishermen. Explore a pearl farm and learn about the local oyster industry.' }
-    ]
-  },
-  2: {
-    id: 2,
-    title: 'Da Nang Coastal Escape',
-    location: 'Đà Nẵng, Việt Nam',
-    price: 299,
-    description: 'Visit the Golden Bridge and relax on the pristine beaches of central Vietnam\'s coast. This 3-day trip combines heritage visits with coastal relaxation. Walk the ancient streets of Hoi An at night, climb the Marble Mountains, and feel the sea breeze on My Khe beach.',
-    duration: '3 Days 2 Nights',
-    maxParticipants: 15,
-    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuD0-xI_5NNTewujqvo97PfB2MaNvVOOXXW1hcSaDHKMs4asSx1FOq4BxJ-u1wdMYspozCf6a1rkpZaRXX-A4v-bVhBqaC85MlHS9XStk4QKCv2j2jGRH1NOTKQftpfNXaNZrdyrzWrwvbQrzvMvlM1N_F-Fw5xgH5uytrLqx6cTFLfvh_aOl0532mFPYnUDc_T0pQXmp2lwv9CLreHZrRAXgYRqRHuXVBwpAdvSJ1nTZ5xyJBoEUuODCw1v3Gg9ouykMJIs4E17B-Q',
-    itinerary: [
-      { day: 1, title: 'Day 1: Arrival & Marble Mountains', desc: 'Welcome to Da Nang! Check in your beach hotel and visit the legendary Marble Mountains, exploring sacred caves and Buddhist sanctuaries.' },
-      { day: 2, title: 'Day 2: Ba Na Hills & Golden Bridge', desc: 'Take the cable car to Ba Na Hills. Walk on the famous Golden Bridge held by giant stone hands and visit the French Village.' },
-      { day: 3, title: 'Day 3: Hoi An Ancient Town & Departure', desc: 'Explore the lanterns and historic houses of Hoi An Ancient Town in the morning, then transfer to the airport for departure.' }
-    ]
-  },
-  3: {
-    id: 3,
-    title: 'Sapa Highlands Treking',
-    location: 'Lào Cai, Việt Nam',
-    price: 349,
-    description: 'A journey through the terraced rice fields and ethnic villages of northern Vietnam. Trek through Lao Chai and Ta Van, interact with H\'mong and Red Dao ethnic groups, and enjoy the breathtaking views of Fansipan mountain peak.',
-    duration: '4 Days 3 Nights',
-    maxParticipants: 10,
-    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCZX6EEXXoSz07_jUo7zLg-TXJ5nfRVbgoO8r_jw8qOoLT_6ylUePyUDUMRX-97DPUX8SeZ7vA_KBibZfMkj_t47T81wMuFbX_gPoQ-7YT5OlxK2a4mHH_006vAbahGHvh2T_trOByovh3EenGXzZHkgC6356-6x3esfScMDP1N6BF2-4vbnWzBGi9U5nhyPeapvXspe0iwnz3nprsyt57JURn7KmDWkyZrp63gfk0ozUR0Qzyzs8mccLIpPx2WwDPChkklO5RDb4w',
-    itinerary: [
-      { day: 1, title: 'Day 1: Hanoi to Sapa & Cat Cat Village', desc: 'Morning limousine bus to Sapa. Trek down to Cat Cat village of the Black H\'mong tribe and watch traditional performances.' },
-      { day: 2, title: 'Day 2: Muong Hoa Valley Trekking', desc: 'Full day trekking through the gorgeous terraced fields of Muong Hoa valley. Visit Lao Chai and Ta Van villages, enjoying lunch with a local family.' },
-      { day: 3, title: 'Day 3: Fansipan Peak Cable Car', desc: 'Take the cable car up to the peak of Fansipan, the Roof of Indochina. Afternoon free to explore Sapa town and market.' }
-    ]
-  }
-};
+import api from '../../../services/api';
 
 export default function TourDetailPage() {
   const { user } = useAuth();
@@ -66,16 +19,43 @@ export default function TourDetailPage() {
 
   const [scrolled, setScrolled] = useState(false);
   const [travelers, setTravelers] = useState(2);
+  const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
   const [bookingStatus, setBookingStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
 
-  // Query tour details
   const { data: apiResponse, isLoading: isTourLoading } = useQuery({
     queryKey: ['tour', tourId],
-    queryFn: () => tourService.getById(tourId),
+    queryFn: async () => {
+      const res = await api.get('/Tours/' + tourId);
+      return res.data?.data;
+    },
     enabled: !isNaN(tourId),
     retry: false,
   });
+
+  const { data: reviews } = useQuery({
+    queryKey: ['tourReviews', tourId],
+    queryFn: async () => {
+      const res = await api.get('/Reviews/tour/' + tourId);
+      return res.data?.data || [];
+    },
+    enabled: !isNaN(tourId),
+  });
+
+  const defaultTour = {
+    id: tourId,
+    title: 'Tour',
+    location: 'Việt Nam',
+    price: 0,
+    description: '',
+    duration: '—',
+    maxParticipants: 0,
+    image: '',
+    durationDays: 0, durationNights: 0,
+    included: 'Professional guide, All meals',
+    excluded: 'Personal expenses, Tips',
+    itinerary: [] as { title: string; description: string }[],
+  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -93,22 +73,24 @@ export default function TourDetailPage() {
   const incrementTravelers = () => setTravelers((prev) => prev + 1);
   const decrementTravelers = () => setTravelers((prev) => (prev > 1 ? prev - 1 : 1));
 
-  // Fallback to MOCK_TOURS
-  const defaultTour = MOCK_TOURS[tourId] || MOCK_TOURS[1];
-  const apiTour = apiResponse?.data;
-  
+  const t = apiResponse || defaultTour;
   const tourDetail = {
-    id: apiTour?.id ?? defaultTour.id,
-    title: apiTour?.title ?? defaultTour.title,
-    location: apiTour?.location ?? defaultTour.location,
-    price: apiTour?.price ?? defaultTour.price,
-    description: apiTour?.description ?? defaultTour.description,
-    maxParticipants: apiTour?.maxParticipants ?? defaultTour.maxParticipants,
-    duration: apiTour?.startDate && apiTour?.endDate 
-      ? `${Math.ceil((new Date(apiTour.endDate).getTime() - new Date(apiTour.startDate).getTime()) / (1000 * 60 * 60 * 24))} Days` 
-      : defaultTour.duration,
-    image: apiTour?.images?.[0]?.imageUrl ?? defaultTour.image,
-    itinerary: defaultTour.itinerary
+    id: t.id,
+    title: t.name || t.title,
+    location: t.location,
+    price: t.priceAdult ?? t.price,
+    description: t.description,
+    maxParticipants: t.maxPeople ?? t.maxParticipants,
+    duration: t.duration
+      ? t.duration
+      : `${t.durationDays || 0} Days ${t.durationNights || 0} Nights`,
+    image: t.images?.[0]?.imageUrl || t.image || 'https://via.placeholder.com/800x400?text=VietTour',
+    itinerary: (t.itineraries || t.itinerary || []).map((i: any) => ({
+      title: i.title || `Day ${i.dayNumber || 0}`,
+      desc: i.description || i.desc || '',
+    })),
+    included: t.included || t.includedStr || '',
+    excluded: t.excluded || t.excludedStr || '',
   };
 
   const pricePerPerson = tourDetail.price;
@@ -118,7 +100,24 @@ export default function TourDetailPage() {
   const totalPrice = subtotal + serviceFee;
 
   const bookMutation = useMutation({
-    mutationFn: () => registrationService.create({ tourId: tourDetail.id }),
+    mutationFn: async () => {
+      const customerRes = await customerService.getCurrent();
+      const customerId = customerRes.data.id;
+
+      const durationDays = t.durationDays || 7;
+      const start = new Date(startDate);
+      const end = new Date(start);
+      end.setDate(end.getDate() + durationDays);
+
+      return bookingService.create({
+        customerId,
+        tourId: tourDetail.id,
+        startDate: start.toISOString(),
+        endDate: end.toISOString(),
+        numAdults: travelers,
+        numChildren: 0,
+      });
+    },
     onSuccess: () => {
       setBookingStatus('success');
       setTimeout(() => {
@@ -127,7 +126,8 @@ export default function TourDetailPage() {
     },
     onError: (err: any) => {
       setBookingStatus('error');
-      setErrorMessage(err?.response?.data?.message || 'Đã xảy ra lỗi khi đặt tour! Vui lòng thử lại.');
+      const msg = err?.response?.data?.message || err?.response?.data?.errors?.[0] || 'Đã xảy ra lỗi khi đặt tour! Vui lòng thử lại.';
+      setErrorMessage(msg);
       setTimeout(() => setBookingStatus('idle'), 4000);
     }
   });
@@ -238,10 +238,14 @@ export default function TourDetailPage() {
                     What's Included
                   </h3>
                   <ul className="space-y-sm text-on-surface-variant font-body-md text-sm">
-                    <li className="flex items-start gap-2"><span className="material-symbols-outlined text-tertiary text-[18px]">check</span> Professional English-speaking guide</li>
-                    <li className="flex items-start gap-2"><span className="material-symbols-outlined text-tertiary text-[18px]">check</span> All meals as mentioned in itinerary</li>
-                    <li className="flex items-start gap-2"><span className="material-symbols-outlined text-tertiary text-[18px]">check</span> Entrance fees & sightseeing tickets</li>
-                    <li className="flex items-start gap-2"><span className="material-symbols-outlined text-tertiary text-[18px]">check</span> Luxury cabin accommodation</li>
+                    {(tourDetail.included ? tourDetail.included.split(',').map((i: string) => i.trim()).filter(Boolean) : [
+                      'Professional English-speaking guide',
+                      'All meals as mentioned in itinerary',
+                      'Entrance fees & sightseeing tickets',
+                      'Luxury cabin accommodation'
+                    ]).map((item: string, idx: number) => (
+                      <li key={idx} className="flex items-start gap-2"><span className="material-symbols-outlined text-tertiary text-[18px]">check</span> {item}</li>
+                    ))}
                   </ul>
                 </div>
                 <div>
@@ -250,10 +254,14 @@ export default function TourDetailPage() {
                     What's Excluded
                   </h3>
                   <ul className="space-y-sm text-on-surface-variant font-body-md text-sm">
-                    <li className="flex items-start gap-2"><span className="material-symbols-outlined text-error text-[18px]">close</span> Personal expenses (laundry, phone)</li>
-                    <li className="flex items-start gap-2"><span className="material-symbols-outlined text-error text-[18px]">close</span> Tips and gratuities</li>
-                    <li className="flex items-start gap-2"><span className="material-symbols-outlined text-error text-[18px]">close</span> Travel insurance</li>
-                    <li className="flex items-start gap-2"><span className="material-symbols-outlined text-error text-[18px]">close</span> International flights</li>
+                    {(tourDetail.excluded ? tourDetail.excluded.split(',').map((i: string) => i.trim()).filter(Boolean) : [
+                      'Personal expenses (laundry, phone)',
+                      'Tips and gratuities',
+                      'Travel insurance',
+                      'International flights'
+                    ]).map((item: string, idx: number) => (
+                      <li key={idx} className="flex items-start gap-2"><span className="material-symbols-outlined text-error text-[18px]">close</span> {item}</li>
+                    ))}
                   </ul>
                 </div>
               </div>
@@ -262,42 +270,41 @@ export default function TourDetailPage() {
             {/* Reviews */}
             <section className="bg-white rounded-3xl p-xl shadow-soft border border-outline-variant/30 text-left" id="reviews">
               <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-xl gap-sm">
-                <h2 className="font-headline-md text-headline-md text-primary font-bold">Traveler Reviews</h2>
+                <h2 className="font-headline-md text-headline-md text-primary font-bold">Đánh Giá Từ Khách Hàng</h2>
                 <div className="flex items-center gap-2">
-                  <span className="font-extrabold text-headline-md">4.9</span>
-                  <div className="flex text-secondary">
-                    <span className="material-symbols-outlined text-secondary" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
-                    <span className="material-symbols-outlined text-secondary" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
-                    <span className="material-symbols-outlined text-secondary" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
-                    <span className="material-symbols-outlined text-secondary" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
-                    <span className="material-symbols-outlined text-secondary" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
-                  </div>
-                  <span className="text-on-surface-variant font-label-md text-xs">(124 reviews)</span>
+                  <span className="font-extrabold text-headline-md">
+                    {reviews?.length ? (reviews.reduce((s: any, r: any) => s + r.rating, 0) / reviews.length).toFixed(1) : '5.0'}
+                  </span>
+                  <span className="text-on-surface-variant font-label-md text-xs">({reviews?.length || 0} đánh giá)</span>
                 </div>
               </div>
               <div className="space-y-lg">
-                <div className="border-b border-outline-variant/30 pb-lg">
-                  <div className="flex justify-between mb-sm">
-                    <div className="flex items-center gap-md">
-                      <div className="w-10 h-10 rounded-full bg-primary-container text-white flex items-center justify-center font-bold text-sm">SJ</div>
-                      <div>
-                        <p className="font-bold text-sm">Sarah Jenkins</p>
-                        <p className="text-[10px] text-on-surface-variant font-medium">2 weeks ago</p>
+                {(reviews?.length > 0 ? reviews : [
+                  { customerName: 'Sarah Jenkins', rating: 5, comment: 'An absolutely magical experience. The staff was attentive, the food was exquisite, and waking up to the limestone karsts outside my cabin window was a dream come true.', createdAt: new Date().toISOString() }
+                ]).map((r: any, idx: number) => {
+                  const initials = (r.customerName || '??').split(' ').map((s: string) => s[0]).join('').toUpperCase().slice(0, 2);
+                  return (
+                    <div key={idx} className="border-b border-outline-variant/30 pb-lg">
+                      <div className="flex justify-between mb-sm">
+                        <div className="flex items-center gap-md">
+                          <div className="w-10 h-10 rounded-full bg-primary-container text-white flex items-center justify-center font-bold text-sm">{initials}</div>
+                          <div>
+                            <p className="font-bold text-sm">{r.customerName}</p>
+                            <p className="text-[10px] text-on-surface-variant font-medium">
+                              {r.createdAt ? new Date(r.createdAt).toLocaleDateString('vi-VN') : ''}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex text-secondary">
+                          {[1,2,3,4,5].map((s) => (
+                            <span key={s} className="material-symbols-outlined text-xs" style={{ fontVariationSettings: s <= r.rating ? "'FILL' 1" : '' }}>star</span>
+                          ))}
+                        </div>
                       </div>
+                      <p className="text-on-surface-variant font-body-md text-sm italic leading-relaxed">"{r.comment}"</p>
                     </div>
-                    <div className="flex text-secondary">
-                      <span className="material-symbols-outlined text-xs" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
-                      <span className="material-symbols-outlined text-xs" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
-                      <span className="material-symbols-outlined text-xs" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
-                      <span className="material-symbols-outlined text-xs" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
-                      <span className="material-symbols-outlined text-xs" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
-                    </div>
-                  </div>
-                  <p className="text-on-surface-variant font-body-md text-sm italic leading-relaxed">"An absolutely magical experience. The staff was attentive, the food was exquisite, and waking up to the limestone karsts outside my cabin window was a dream come true."</p>
-                </div>
-                <div className="pb-sm">
-                  <button className="text-primary font-bold hover:text-secondary text-sm transition-colors">View all reviews</button>
-                </div>
+                  );
+                })}
               </div>
             </section>
           </div>
@@ -322,7 +329,8 @@ export default function TourDetailPage() {
                       <input 
                         className="w-full bg-surface/50 border border-outline-variant/60 rounded-2xl p-3 text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-sm font-semibold" 
                         type="date" 
-                        defaultValue="2026-10-12"
+                        value={startDate}
+                        onChange={(e) => setStartDate(e.target.value)}
                       />
                     </div>
                   </div>

@@ -22,11 +22,7 @@ export const bookingService = {
 
 // Legacy alias for backward compatibility with existing pages
 export const registrationService = {
-  create: (data: { tourId: number }) => bookingService.create({
-    customerId: 0, tourId: data.tourId,
-    startDate: new Date().toISOString(), endDate: new Date().toISOString(),
-    numAdults: 1, numChildren: 0
-  }),
+  create: (data: { customerId: number; tourId: number; startDate: string; endDate: string; numAdults: number; numChildren: number; notes?: string }) => bookingService.create(data),
   getAll: bookingService.getAll,
   getMyRegistrations: (params?: Record<string, any>) => bookingService.getAll(params),
   getById: bookingService.getById,
