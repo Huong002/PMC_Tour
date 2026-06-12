@@ -1,0 +1,23 @@
+namespace Core.DTOs.Response;
+
+public class LoginResponse
+{
+    public int UserId { get; set; }
+    public string Username { get; set; } = string.Empty;
+    public string FullName { get; set; } = string.Empty;
+    public string Token { get; set; } = string.Empty;
+    public string RefreshToken { get; set; } = string.Empty;
+    public List<string> Roles { get; set; } = new();
+}
+
+public class UserResponse
+{
+    public int Id { get; set; }
+    public string Username { get; set; } = string.Empty;
+    public string Email { get; set; } = string.Empty;
+    public string FullName { get; set; } = string.Empty;
+    public string? Phone { get; set; }
+    public bool IsActive { get; set; }
+    public List<string> Roles { get; set; } = new();
+    public DateTime CreatedAt { get; set; }
+}

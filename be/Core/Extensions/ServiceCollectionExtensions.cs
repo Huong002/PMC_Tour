@@ -1,17 +1,21 @@
 using System.Reflection;
-using Core.Interfaces;
-using MediatR;
-using Microsoft.Extensions.Configuration;
+using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
-using Shared;
-using Shared.Interfaces;
 
 namespace Core.Extensions;
 
 public static class ServiceCollectionExtensions
 {
-    public static void AddCoreLayer(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddCoreLayer(this IServiceCollection services)
     {
         services.AddAutoMapper(Assembly.GetExecutingAssembly());
+        services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
+        return services;
+    }
+
+    public static IServiceCollection AddCoreLayerWithMediatR(this IServiceCollection services)
+    {
+        services.AddCoreLayer();
+        return services;
     }
 }

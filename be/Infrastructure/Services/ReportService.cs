@@ -1,106 +1,85 @@
-using AutoMapper;
-using AutoMapper.QueryableExtensions;
-using Core.DTOs.Requests;
-using Core.DTOs.Responses;
+using Core.DTOs.Response;
+using Core.Entities;
+using Core.Enums;
 using Core.Interfaces;
-using Infrastructure.Data;
-using Infrastructure.Extensions;
 using Microsoft.EntityFrameworkCore;
+using Shared;
 
 namespace Infrastructure.Services;
 
 public class ReportService : IReportService
 {
-    private readonly ApplicationDbContext _context;
-    private readonly IMapper _mapper;
-    public ReportService(ApplicationDbContext context, IMapper mapper)
+    private readonly IUnitOfWork _unitOfWork;
+
+    public ReportService(IUnitOfWork unitOfWork)
     {
-        _context = context;
-        _mapper = mapper;
+        _unitOfWork = unitOfWork;
     }
 
-    public async Task<List<GetReportExportFileDto>> ExportReport(ReportRequest request, CancellationToken cancellationToken)
+    public async Task<ApiResponse<RevenueReportResponse>> GetRevenueReportAsync(DateTime? fromDate, DateTime? toDate)
     {
-        var users = await _context.UserSync
-            .Where(x => x.DepartmentId == request.DepartmentCode && x.IsDeleted != true)
-            .ProjectTo<UserDto>(_mapper.ConfigurationProvider)
-            .ToListAsync(cancellationToken);
+        var from = fromDate ?? DateTime.UtcNow.AddMonths(-1);
+        var to = toDate ?? DateTime.UtcNow;
 
-        DateTime firstDayOfMonth = new DateTime(request.Date.Year, request.Date.Month, 1);
-        DateTime lastDayOfMonth = firstDayOfMonth.AddMonths(1).AddDays(-1);
+        var payments = _unitOfWork.Repository<Payment>().GetQueryable()
+            .Include(p => p.Booking)
+            .Where(p => p.CreatedAt >= from && p.CreatedAt <= to)
+            .ToList(); // EF SQLite/Postgres async for aggregate
 
-        var personCodes = users.Select(u => u.UserName).ToHashSet();
+        var totalRevenue = payments
+            .Where(p => p.Booking.Status == BookingStatus.Confirmed)
+            .Sum(p => p.Amount);
 
-        var recognitionResults = await _context.FaceIDRecognitionResults
-            .Where(x => personCodes.Contains(x.PersonCode) &&
-                        x.RecordedTime >= firstDayOfMonth &&
-                        x.RecordedTime <= lastDayOfMonth)
-            .Select(x => new { x.PersonCode, x.RecordedTime })
-            .ToListAsync(cancellationToken);
-
-        var attendanceDays = recognitionResults
-            .GroupBy(x => x.PersonCode)
-            .ToDictionary(
-                g => g.Key,
-                g => g.Select(x => x.RecordedTime.Date).Distinct().ToHashSet()
-            );
-
-        var totalDays = (lastDayOfMonth - firstDayOfMonth).Days + 1;
-
-        return users.Select(u => new GetReportExportFileDto
+        var report = new RevenueReportResponse
         {
-            PersonCode = u.UserName,
-            FullName = u.FullName,
-            IsAttendances = Enumerable.Range(0, totalDays)
-                .Select(i => attendanceDays.TryGetValue(u.UserName, out var days) && days.Contains(firstDayOfMonth.AddDays(i)))
-                .ToArray()
-        }).ToList();
+            FromDate = from,
+            ToDate = to,
+            TotalRevenue = totalRevenue,
+            TotalPayments = payments.Count,
+            SuccessfulPayments = payments.Count(p => p.Booking.Status == BookingStatus.Confirmed)
+        };
+
+        return ApiResponse<RevenueReportResponse>.Ok(report);
     }
-    
-    public async Task<List<GetGroupReportExportFileDto>> ExportReport(ReportAttendRequest request, CancellationToken cancellationToken)
+
+    public async Task<ApiResponse<List<TourReportResponse>>> GetTourReportAsync(DateTime? fromDate, DateTime? toDate)
     {
-        var users = await _context.UserSync
-            .Where(x => x.DepartmentId == request.DepartmentCode && x.IsDeleted != true)
-            .ProjectTo<UserByDepartment>(_mapper.ConfigurationProvider)
-            .ToListAsync(cancellationToken);
-
-        var personCodes = users.Select(u => u.UserName).ToHashSet();
-        var listData = new List<GetGroupReportExportFileDto>();
-        var months = request.Months.Split(",");
-
-        foreach (var month in months)
-        {
-            var item = new GetGroupReportExportFileDto { Month = month };
-            DateTime firstDayOfMonth = new DateTime(int.Parse(request.Year), month.ToMonthNumber()!.Value, 1);
-            DateTime lastDayOfMonth = firstDayOfMonth.AddMonths(1).AddDays(-1);
-
-            var recognitionResults = await _context.FaceIDRecognitionResults
-                .Where(x => personCodes.Contains(x.PersonCode) &&
-                            x.RecordedTime >= firstDayOfMonth &&
-                            x.RecordedTime <= lastDayOfMonth)
-                .Select(x => new { x.PersonCode, x.RecordedTime })
-                .ToListAsync(cancellationToken);
-
-            var attendanceDays = recognitionResults
-                .GroupBy(x => x.PersonCode)
-                .ToDictionary(
-                    g => g.Key,
-                    g => g.Select(x => x.RecordedTime.Date).Distinct().ToHashSet()
-                );
-
-            var totalDays = (lastDayOfMonth - firstDayOfMonth).Days + 1;
-
-            item.Reports = users.Select(u => new GetReportExportFileDto
+        var tours = await _unitOfWork.Tours.GetQueryable()
+            .Include(t => t.Bookings)
+            .Where(t => t.IsActive)
+            .Select(t => new TourReportResponse
             {
-                PersonCode = u.UserName,
-                FullName = u.FullName,
-                IsAttendances = Enumerable.Range(0, totalDays)
-                    .Select(i => attendanceDays.TryGetValue(u.UserName, out var days) && days.Contains(firstDayOfMonth.AddDays(i)))
-                    .ToArray()
-            }).ToList();
+                TourId = t.Id,
+                TourName = t.Name,
+                TotalBookings = t.Bookings.Count,
+                AverageRating = t.Reviews.Any() ? t.Reviews.Average(r => (double?)r.Rating) ?? 0 : 0
+            })
+            .OrderByDescending(t => t.TotalBookings)
+            .ToListAsync();
 
-            listData.Add(item);
-        }
-        return listData;
+        return ApiResponse<List<TourReportResponse>>.Ok(tours);
+    }
+
+    public async Task<ApiResponse<BookingReportResponse>> GetBookingReportAsync(DateTime? fromDate, DateTime? toDate)
+    {
+        var from = fromDate ?? DateTime.UtcNow.AddMonths(-1);
+        var to = toDate ?? DateTime.UtcNow;
+
+        var bookings = await _unitOfWork.Bookings.GetQueryable()
+            .Where(b => b.CreatedAt >= from && b.CreatedAt <= to)
+            .ToListAsync();
+
+        var report = new BookingReportResponse
+        {
+            FromDate = from,
+            ToDate = to,
+            Total = bookings.Count,
+            Pending = bookings.Count(b => b.Status == BookingStatus.Pending),
+            Confirmed = bookings.Count(b => b.Status == BookingStatus.Confirmed),
+            Completed = bookings.Count(b => b.Status == BookingStatus.Completed),
+            Cancelled = bookings.Count(b => b.Status == BookingStatus.Cancelled)
+        };
+
+        return ApiResponse<BookingReportResponse>.Ok(report);
     }
 }

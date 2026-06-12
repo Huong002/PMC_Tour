@@ -1,12 +1,11 @@
-using Core.DTOs.Requests;
-using Core.DTOs.Responses;
+using Core.DTOs.Response;
+using Shared;
 
 namespace Core.Interfaces;
 
 public interface IReportService
 {
-    Task<List<GetReportExportFileDto>> ExportReport(ReportRequest request, CancellationToken cancellationToken = default);
-
-    Task<List<GetGroupReportExportFileDto>> ExportReport(ReportAttendRequest request,
-        CancellationToken cancellationToken);
+    Task<ApiResponse<RevenueReportResponse>> GetRevenueReportAsync(DateTime? fromDate, DateTime? toDate);
+    Task<ApiResponse<List<TourReportResponse>>> GetTourReportAsync(DateTime? fromDate, DateTime? toDate);
+    Task<ApiResponse<BookingReportResponse>> GetBookingReportAsync(DateTime? fromDate, DateTime? toDate);
 }

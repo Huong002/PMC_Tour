@@ -1,47 +1,48 @@
-using Core.DTOs.Requests;
-using Core.DTOs.Responses;
-using Core.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Shared;
-using WebAPI.Authorization;
+using Core.DTOs.Request;
+using Core.Interfaces;
 
 namespace WebAPI.Controllers;
 
-public class AuthController : ApiControllerBase
+[ApiController]
+[Route("api/[controller]")]
+public class AuthController : ControllerBase
 {
-    private readonly ILogger<AuthController> _logger;
-    private readonly IIdentityService _identityService;
-    public AuthController(ILogger<AuthController> logger, IIdentityService identityService)
+    private readonly IAuthService _authService;
+
+    public AuthController(IAuthService authService)
     {
-        _logger = logger;
-        _identityService = identityService;
-    }
-    
-    [AllowAnonymous]
-    [HttpPost]
-    [Route("login")]
-    public async Task<ActionResult<Result<AuthenticationResponse>>> Create(LoginCommand command, CancellationToken cancellationToken)
-    {
-        var data = await _identityService.LoginAsync(command, IpAddress(), cancellationToken);
-        SetTokenCookie(data.RefreshToken);
-        return await Result<AuthenticationResponse>.SuccessAsync(data, "Đăng nhập thành công.");
-    }
-    
-    private void SetTokenCookie(string token)
-    {
-        var cookieOptions = new CookieOptions
-        {
-            HttpOnly = true,
-            Expires = DateTime.UtcNow.AddDays(7)
-        };
-        Response.Cookies.Append("refreshToken", token, cookieOptions);
+        _authService = authService;
     }
 
-    private string IpAddress()
+    [HttpPost("login")]
+    public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
-        if (Request.Headers.ContainsKey("X-Forwarded-For"))
-            return Request.Headers["X-Forwarded-For"];
-        else
-            return HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+        var result = await _authService.LoginAsync(request);
+        return StatusCode(result.StatusCode, result);
+    }
+
+    [HttpPost("register")]
+    public async Task<IActionResult> Register([FromBody] RegisterRequest request)
+    {
+        var result = await _authService.RegisterAsync(request);
+        return StatusCode(result.StatusCode, result);
+    }
+
+    [HttpPost("refresh")]
+    public async Task<IActionResult> Refresh([FromBody] string refreshToken)
+    {
+        var result = await _authService.RefreshTokenAsync(refreshToken);
+        return StatusCode(result.StatusCode, result);
+    }
+
+    [Authorize]
+    [HttpPost("change-password")]
+    public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
+    {
+        var userId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
+        var result = await _authService.ChangePasswordAsync(userId, request);
+        return StatusCode(result.StatusCode, result);
     }
 }

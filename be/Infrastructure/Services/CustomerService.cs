@@ -1,0 +1,91 @@
+using AutoMapper;
+using Core.DTOs.Request;
+using Core.DTOs.Response;
+using Core.Entities;
+using Core.Interfaces;
+using Microsoft.EntityFrameworkCore;
+using Shared;
+
+namespace Infrastructure.Services;
+
+public class CustomerService : ICustomerService
+{
+    private readonly IUnitOfWork _unitOfWork;
+    private readonly IMapper _mapper;
+
+    public CustomerService(IUnitOfWork unitOfWork, IMapper mapper)
+    {
+        _unitOfWork = unitOfWork;
+        _mapper = mapper;
+    }
+
+    public async Task<ApiResponse<PagedResult<CustomerResponse>>> GetAllAsync(PagedRequest request)
+    {
+        var query = _unitOfWork.Customers.GetQueryable().AsQueryable();
+
+        if (!string.IsNullOrEmpty(request.SearchTerm))
+            query = query.Where(c => c.FullName.Contains(request.SearchTerm) || c.Phone!.Contains(request.SearchTerm));
+
+        var total = await query.CountAsync();
+        var items = await query.OrderByDescending(c => c.CreatedAt)
+            .Skip((request.Page - 1) * request.PageSize)
+            .Take(request.PageSize)
+            .ToListAsync();
+
+        var data = _mapper.Map<List<CustomerResponse>>(items);
+        return ApiResponse<PagedResult<CustomerResponse>>.Ok(
+            new PagedResult<CustomerResponse>(data, total, request.Page, request.PageSize));
+    }
+
+    public async Task<ApiResponse<CustomerResponse>> GetByIdAsync(int id)
+    {
+        var customer = await _unitOfWork.Customers.GetQueryable()
+            .Include(c => c.Bookings)
+            .FirstOrDefaultAsync(c => c.Id == id);
+
+        if (customer == null)
+            return ApiResponse<CustomerResponse>.Fail("Customer not found", 404);
+
+        return ApiResponse<CustomerResponse>.Ok(_mapper.Map<CustomerResponse>(customer));
+    }
+
+    public async Task<ApiResponse<CustomerResponse>> CreateAsync(CreateCustomerRequest request)
+    {
+        var customer = _mapper.Map<Customer>(request);
+        customer.CreatedAt = DateTime.UtcNow;
+
+        await _unitOfWork.Customers.AddAsync(customer);
+        await _unitOfWork.SaveChangesAsync();
+
+        return ApiResponse<CustomerResponse>.Ok(_mapper.Map<CustomerResponse>(customer), "Customer created successfully");
+    }
+
+    public async Task<ApiResponse<CustomerResponse>> UpdateAsync(int id, UpdateCustomerRequest request)
+    {
+        var customer = await _unitOfWork.Customers.GetByIdAsync(id);
+        if (customer == null)
+            return ApiResponse<CustomerResponse>.Fail("Customer not found", 404);
+
+        _mapper.Map(request, customer);
+        customer.UpdatedAt = DateTime.UtcNow;
+
+        await _unitOfWork.Customers.UpdateAsync(customer);
+        await _unitOfWork.SaveChangesAsync();
+
+        return ApiResponse<CustomerResponse>.Ok(_mapper.Map<CustomerResponse>(customer), "Customer updated successfully");
+    }
+
+    public async Task<ApiResponse<bool>> DeleteAsync(int id)
+    {
+        var customer = await _unitOfWork.Customers.GetByIdAsync(id);
+        if (customer == null)
+            return ApiResponse<bool>.Fail("Customer not found", 404);
+
+        customer.IsDeleted = true;
+        customer.DeletedAt = DateTime.UtcNow;
+        await _unitOfWork.Customers.UpdateAsync(customer);
+        await _unitOfWork.SaveChangesAsync();
+
+        return ApiResponse<bool>.Ok(true, "Customer deleted successfully");
+    }
+}
