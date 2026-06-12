@@ -1,0 +1,170 @@
+@startuml
+skinparam defaultFontName Times New Roman
+skinparam defaultFontSize 11
+
+skinparam packageBackgroundColor #F3E79B
+skinparam packageBorderColor black
+skinparam packageBorderThickness 1
+skinparam roundCorner 0
+skinparam shadowing false
+
+skinparam packageFontName Times New Roman
+skinparam packageFontSize 13
+skinparam packageFontStyle bold
+
+skinparam classBackgroundColor #F3E79B
+skinparam classBorderColor black
+skinparam classBorderThickness 1
+
+skinparam arrowColor black
+skinparam arrowThickness 1
+skinparam linetype ortho
+
+hide stereotype
+hide empty members
+
+' Layer: API
+package "API Layer\n(WebAPI.Controllers)" as API {
+  [AuthController]
+  [BlogsController]
+  [BookingsController]
+  [ContactController]
+  [CustomersController]
+  [DashboardController]
+  [DiscountsController]
+  [ItinerariesController]
+  [ReportsController]
+  [ReviewsController]
+  [ToursController]
+  [TourTypesController]
+}
+
+' Layer: Middleware
+package "Middleware\n(WebAPI.Middleware)" as Middleware {
+  [JwtMiddleware]
+}
+
+' Layer: Service Interfaces
+package "Service Interfaces\n(Core.Interfaces)" as ServiceInterface {
+  [IAuthService]
+  [IBlogService]
+  [IBookingService]
+  [IContactService]
+  [ICustomerService]
+  [IDashboardService]
+  [IDiscountService]
+  [IItineraryService]
+  [IReportService]
+  [IReviewService]
+  [IRoleService]
+  [ITourService]
+  [ITourTypeService]
+  [IUserService]
+  [IGenericRepository]
+  [IUnitOfWork]
+}
+
+' Layer: DTOs
+package "DTO Layer\n(Core.DTOs)" as DTO {
+  [Request DTOs]
+  [Response DTOs]
+}
+
+' Layer: Validators
+package "Validator Layer\n(Core.Validators)" as Validator {
+  [AuthValidators]
+  [BlogValidators]
+  [BookingValidators]
+  [ContactValidators]
+  [CustomerValidators]
+  [DiscountValidators]
+  [ItineraryValidators]
+  [ReviewValidators]
+  [TourValidators]
+  [UserValidators]
+}
+
+' Layer: Service Implementations
+package "Service Implementation\n(Infrastructure.Services)" as ServiceImpl {
+  [AuthService]
+  [BlogService]
+  [BookingService]
+  [ContactService]
+  [CustomerService]
+  [DashboardService]
+  [DiscountService]
+  [ItineraryService]
+  [ReportService]
+  [ReviewService]
+  [RoleService]
+  [TourService]
+  [TourTypeService]
+  [UserService]
+}
+
+' Layer: Data / Repository
+package "Data / Repository\n(Infrastructure.Data)" as DataLayer {
+  [ApplicationDbContext]
+  [GenericRepository]
+  [UnitOfWork]
+}
+
+' Layer: Entities
+package "Domain Entities\n(Core.Entities)" as Entity {
+  [Tour]
+  [TourType]
+  [TourImage]
+  [Booking]
+  [BookingDetail]
+  [Customer]
+  [Payment]
+  [Itinerary]
+  [Discount]
+  [Review]
+  [User]
+  [Role]
+  [UserRole]
+  [Blog]
+  [BlogCategory]
+  [ContactMessage]
+}
+
+' Layer: Enums
+package "Enums\n(Core.Enums)" as Enum {
+  [BookingStatus]
+  [PaymentStatus]
+  [PaymentMethod]
+  [ReviewStatus]
+  [TourStatus]
+  [BlogStatus]
+  [DiscountType]
+  [Gender]
+}
+
+' Layer: Shared
+package "Shared\n(Shared)" as Shared {
+  [BaseEntity]
+  [ApiResponse]
+  [PagedResult]
+}
+
+' === Dependencies (top-down) ===
+
+API -[#black,dashed]-> Middleware : Uses
+API -[#black,dashed]-> ServiceInterface : Depends On
+API -[#black,dashed]-> DTO : Uses
+API -[#black,dashed]-> Validator : Uses
+
+ServiceImpl -[#black,dashed]-> ServiceInterface : Implements
+ServiceImpl -[#black,dashed]-> DataLayer : Depends On
+ServiceImpl -[#black,dashed]-> Entity : Uses
+
+DataLayer -[#black,dashed]-> Entity : Depends On
+DataLayer -[#black,dashed]-> Shared : Uses
+
+Entity -[#black,dashed]-> Shared : Extends
+
+DTO -[#black,dashed]-> Entity : References
+Validator -[#black,dashed]-> DTO : Validates
+
+@enduml

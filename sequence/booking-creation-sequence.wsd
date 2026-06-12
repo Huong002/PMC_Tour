@@ -1,0 +1,185 @@
+@startuml
+skinparam backgroundColor #FEFEFE
+skinparam participantBackgroundColor Yellow
+skinparam participantBorderColor #B8860B
+skinparam actorBackgroundColor Yellow
+skinparam actorBorderColor #B8860B
+skinparam boundaryBackgroundColor Yellow
+skinparam boundaryBorderColor #B8860B
+skinparam controlBackgroundColor Yellow
+skinparam controlBorderColor #B8860B
+skinparam entityBackgroundColor Yellow
+skinparam entityBorderColor #B8860B
+skinparam databaseBackgroundColor Yellow
+skinparam databaseBorderColor #B8860B
+skinparam lifelineStrategy solid
+skinparam sequenceMessageAlign center
+
+actor "Khach hang\n(Customer)" as User #Yellow
+boundary "TourDetailPage\n(Next.js Frontend)" as UI #Yellow
+boundary "AuthGuard" as AuthGuard #Yellow
+boundary "bookingService\n(API Client)" as APIClient #Yellow
+boundary "api.ts\n(Axios)" as Axios #Yellow
+control "JwtMiddleware" as JWT #Yellow
+control "BookingsController" as Ctrl #Yellow
+control "BookingService" as Svc #Yellow
+entity "UnitOfWork" as UoW #Yellow
+database "GenericRepository\nTour" as RepoT #Yellow
+database "GenericRepository\nCustomer" as RepoC #Yellow
+database "GenericRepository\nBooking" as RepoB #Yellow
+database "GenericRepository\nBookingDetail" as RepoD #Yellow
+database "PostgreSQL" as DB #Yellow
+
+== 1: Xem chi tiet tour truoc khi dat (GET /api/Tours/{id}) ==
+
+User -> UI : 1: Click "View Details" tren 1 tour
+activate UI
+
+UI -> Axios : 1.1: api.get('/Tours/{id}')
+activate Axios
+note right: Endpoint public
+
+Axios -> Ctrl : 1.2: HTTP GET /api/Tours/{id}
+activate Ctrl
+
+Ctrl -> Svc : 1.3: GetByIdAsync(id)
+activate Svc
+note right: TourService.GetByIdAsync\nInclude: TourType, Images,\nItineraries, Reviews
+
+Svc -> DB : 1.3.1: SELECT ... FROM Tours\nLEFT JOIN TourTypes\nLEFT JOIN TourImages\nLEFT JOIN Itineraries\nLEFT JOIN Reviews\nWHERE Tours.Id = {id}
+activate DB
+DB --> Svc : 1.3.2: Tour + TourType + Images + Itineraries + Reviews
+deactivate DB
+
+Svc --> Ctrl : 1.3.3: ApiResponse<TourResponse>
+deactivate Svc
+
+Ctrl --> Axios : 1.3.4: HTTP 200 + JSON
+deactivate Ctrl
+
+Axios --> UI : 1.3.5: res.data
+deactivate Axios
+
+UI -> UI : 1.3.6: Render chi tiet tour (hinh, gia, lich trinh, danh gia)
+UI --> User : 1.3.7: Hien thi thong tin tour
+deactivate UI
+
+== 2: Dat tour (POST /api/Bookings - [Authorize]) ==
+
+User -> UI : 2: Nhap thong tin dat tour va submit
+activate UI
+
+UI -> AuthGuard : 2.1: Kiem tra da dang nhap chua
+activate AuthGuard
+alt [2.1.1] Chua dang nhap
+    AuthGuard --> UI : 2.1.1.1: Redirect /login
+else [2.1.2] Da dang nhap
+    AuthGuard --> UI : 2.1.2.1: Tiep tuc
+end
+deactivate AuthGuard
+
+UI -> UI : 2.2: Validate frontend
+note right: Kiem tra:\n- So luong khach > 0\n- Ngay bat dau > hom nay\n- Ngay ket thuc > ngay bat dau
+
+UI -> APIClient : 2.3: bookingService.create(customerId, tourId, startDate, endDate, numAdults, numChildren, notes, discountCode)
+activate APIClient
+
+APIClient -> Axios : 2.3.1: api.post('/Bookings', data)
+activate Axios
+note right: Axios tu dong them\nAuthorization: Bearer {token}
+
+Axios -> JWT : 2.3.2: HTTP POST /api/Bookings + Bearer
+activate JWT
+
+JWT -> JWT : 2.3.2.1: Validate JWT token
+alt [2.3.2.2] Token hop le
+    JWT -> JWT : 2.3.2.2.1: Attach User
+else [2.3.2.3] Token khong hop le
+    note right: [Authorize] -> 401
+end
+JWT -> Ctrl : 2.3.2.4: Chuyen tiep
+deactivate JWT
+
+activate Ctrl
+Ctrl -> Ctrl : 2.3.3: Lay userId tu claims: NameIdentifier
+Ctrl -> Svc : 2.3.4: CreateAsync(request, userId)
+activate Svc
+
+Svc -> RepoT : 2.3.4.1: Tours.GetByIdAsync(request.TourId)
+activate RepoT
+RepoT -> DB : 2.3.4.1.1: SELECT ... FROM Tours WHERE Id = {tourId}
+activate DB
+DB --> RepoT : 2.3.4.1.2: Tour entity hoac null
+deactivate DB
+deactivate RepoT
+
+alt [2.3.4.2] Tour khong ton tai
+    Svc --> Ctrl : 2.3.4.2.1: ApiResponse.Fail("Tour not found", 404)
+else
+
+Svc -> RepoC : 2.3.4.3: Customers.GetByIdAsync(request.CustomerId)
+activate RepoC
+RepoC -> DB : 2.3.4.3.1: SELECT ... FROM Customers WHERE Id = {customerId}
+activate DB
+DB --> RepoC : 2.3.4.3.2: Customer entity hoac null
+deactivate DB
+deactivate RepoC
+
+alt [2.3.4.4] Customer khong ton tai
+    Svc --> Ctrl : 2.3.4.4.1: ApiResponse.Fail("Customer not found", 404)
+else
+
+Svc -> Svc : 2.3.4.5: Tinh toan gia
+note right: TotalPrice = (numAdults * tour.PriceAdult)\n                + (numChildren * tour.PriceChild)\nFinalPrice = TotalPrice - discountAmount
+Svc -> Svc : 2.3.4.6: GenerateBookingCode()
+note right: BK{yyyyMMdd}{Random 5 digit}
+
+Svc -> Svc : 2.3.4.7: Map request -> Booking entity
+note right: booking.Status = BookingStatus.Pending\nbooking.CreatedBy = userId\nbooking.CreatedAt = UtcNow
+
+Svc -> UoW : 2.3.4.8: Bookings.AddAsync(booking)
+activate UoW
+
+alt [2.3.4.9] Co BookingDetail
+    UoW -> RepoD : 2.3.4.9.1: Add BookingDetail\n(FullName, PassportNumber, Note)
+    activate RepoD
+    RepoD -> DB : 2.3.4.9.2: INSERT INTO BookingDetails
+    activate DB
+    DB --> RepoD : 2.3.4.9.3: created
+    deactivate DB
+    deactivate RepoD
+end
+
+UoW -> RepoB : 2.3.4.10: AddAsync(Booking)
+activate RepoB
+RepoB -> DB : 2.3.4.10.1: INSERT INTO Bookings\n(BookingCode, CustomerId, TourId,\nStartDate, EndDate, NumAdults,\nNumChildren, TotalPrice, FinalPrice,\nBookingDate, Status=Pending, CreatedBy)
+activate DB
+DB --> RepoB : 2.3.4.10.2: Booking created
+deactivate DB
+deactivate RepoB
+
+UoW -> DB : 2.3.4.11: SaveChangesAsync() -> COMMIT
+activate DB
+DB --> UoW : 2.3.4.11.1: success
+deactivate DB
+deactivate UoW
+
+Svc -> Svc : 2.3.4.12: GetByIdAsync(booking.Id) lay data day du
+Svc --> Ctrl : 2.3.4.13: ApiResponse<BookingResponse>("Booking created successfully")
+end
+end
+deactivate Svc
+
+Ctrl --> Axios : 2.3.5: HTTP 200 + JSON
+deactivate Ctrl
+
+Axios --> APIClient : 2.3.6: res.data
+deactivate Axios
+
+APIClient --> UI : 2.3.7: ApiResponse
+deactivate APIClient
+
+UI --> User : 2.3.8: Thong bao dat tour thanh cong
+deactivate UI
+
+@enduml

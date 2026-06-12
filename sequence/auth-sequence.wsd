@@ -1,0 +1,258 @@
+@startuml
+skinparam backgroundColor #FEFEFE
+skinparam participantBackgroundColor Yellow
+skinparam participantBorderColor #B8860B
+skinparam actorBackgroundColor Yellow
+skinparam actorBorderColor #B8860B
+skinparam boundaryBackgroundColor Yellow
+skinparam boundaryBorderColor #B8860B
+skinparam controlBackgroundColor Yellow
+skinparam controlBorderColor #B8860B
+skinparam entityBackgroundColor Yellow
+skinparam entityBorderColor #B8860B
+skinparam databaseBackgroundColor Yellow
+skinparam databaseBorderColor #B8860B
+skinparam lifelineStrategy solid
+skinparam sequenceMessageAlign center
+
+actor "Khach hang\n(Customer)" as User #Yellow
+boundary "LoginPage/RegisterPage\n(Next.js Frontend)" as UI #Yellow
+boundary "useAuth hook\n(React Query)" as AuthHook #Yellow
+boundary "authService\n(API Client)" as APIClient #Yellow
+boundary "api.ts\n(Axios Instance)" as Axios #Yellow
+control "AuthController" as Ctrl #Yellow
+control "AuthService" as Svc #Yellow
+entity "UnitOfWork" as UoW #Yellow
+database "GenericRepository\nUser" as Repo #Yellow
+database "GenericRepository\nRole" as RepoRole #Yellow
+database "GenericRepository\nCustomer" as RepoCus #Yellow
+database "PostgreSQL\n(PMC_Tour)" as DB #Yellow
+
+== 1: Dang ky (POST /api/Auth/register - Public) ==
+
+User -> UI : 1: Mo trang Register (/register)
+activate UI
+
+UI -> UI : 1.1: Render form dang ky: FullName, Email, Phone, Password, Confirm
+UI --> User : 1.1.1: Hien thi form
+
+User -> UI : 1.2: Nhap thong tin va submit
+activate UI
+
+UI -> UI : 1.2.1: Validate frontend
+alt [1.2.2] Password != ConfirmPassword
+    UI --> User : 1.2.2.1: Bao loi "Mat khau xac nhan khong khop"
+else [1.2.3] Chua dong y dieu khoan
+    UI --> User : 1.2.3.1: Bao loi "Phai dong y dieu khoan"
+else [1.2.4] Hop le
+    UI -> AuthHook : 1.2.4.1: register({ username, password, fullName, email, phone })
+    activate AuthHook
+
+    AuthHook -> APIClient : 1.2.4.2: authService.register(data)
+    activate APIClient
+
+    APIClient -> Axios : 1.2.4.3: api.post('/Auth/register', data)
+    activate Axios
+    note right: Endpoint public -\nkhong can Bearer token
+    Axios -> Ctrl : 1.2.4.4: HTTP POST /api/Auth/register
+    activate Ctrl
+
+    Ctrl -> Svc : 1.2.4.5: RegisterAsync(registerRequest)
+    activate Svc
+
+    Svc -> UoW : 1.2.4.5.1: Users.GetQueryable() kiem tra Username
+    activate UoW
+    UoW -> DB : 1.2.4.5.1.1: SELECT ... WHERE Username = {username}
+    activate DB
+    DB --> UoW : 1.2.4.5.1.2: Co/khong
+    deactivate DB
+
+    alt [1.2.4.5.2] Username da ton tai
+        Svc --> Ctrl : 1.2.4.5.2.1: ApiResponse.Fail("Username already exists")
+    else [1.2.4.5.3] Email da ton tai
+        Svc --> Ctrl : 1.2.4.5.3.1: ApiResponse.Fail("Email already exists")
+    else [1.2.4.5.4] Hop le
+        Svc -> RepoRole : 1.2.4.5.4.1: FirstOrDefaultAsync(r => r.Name == "Customer")
+        activate RepoRole
+        RepoRole -> DB : 1.2.4.5.4.2: SELECT * FROM Roles WHERE Name = 'Customer'
+        activate DB
+        DB --> RepoRole : 1.2.4.5.4.3: Role entity
+        deactivate DB
+        deactivate RepoRole
+
+        alt [1.2.4.5.5] Khong tim thay role mac dinh
+            Svc --> Ctrl : 1.2.4.5.5.1: ApiResponse.Fail("Default role not found", 500)
+        else
+
+        Svc -> Svc : 1.2.4.5.6: HashPassword(password) bang BCrypt
+        note right: BCrypt.Net.BCrypt.HashPassword()
+
+        Svc -> UoW : 1.2.4.5.7: Users.AddAsync(user)
+        activate UoW
+        UoW -> DB : 1.2.4.5.7.1: INSERT INTO Users\n(Username, Email, PasswordHash,\nFullName, Phone, IsActive=true, CreatedAt)
+        activate DB
+        DB --> UoW : 1.2.4.5.7.2: User created (co Id)
+        deactivate DB
+
+        UoW -> DB : 1.2.4.5.7.3: INSERT INTO UserRoles\n(UserId, RoleId)
+        activate DB
+        DB --> UoW : 1.2.4.5.7.4: created
+        deactivate DB
+        deactivate UoW
+
+        Svc -> UoW : 1.2.4.5.8: SaveChangesAsync()
+        activate UoW
+        UoW -> DB : 1.2.4.5.8.1: COMMIT
+        activate DB
+        DB --> UoW : 1.2.4.5.8.2: success
+        deactivate DB
+        deactivate UoW
+
+        Svc -> Svc : 1.2.4.5.9: GenerateJwtToken(user)
+        note right: Tao JWT voi claims:\nNameIdentifier=userId\nName=username\nEmail=email\nRole=Customer\nHet han: 24h
+        Svc -> Svc : 1.2.4.5.10: GenerateRefreshToken() (32 bytes random)
+        Svc -> UoW : 1.2.4.5.11: Luu RefreshToken + Expiry (7 ngay)
+        activate UoW
+        UoW -> DB : 1.2.4.5.11.1: UPDATE Users SET RefreshToken, RefreshTokenExpiry
+        activate DB
+        DB --> UoW : 1.2.4.5.11.2: success
+        deactivate DB
+        deactivate UoW
+
+        Svc --> Ctrl : 1.2.4.5.12: ApiResponse<LoginResponse>(token, refreshToken, userId, username, fullName, roles)
+        end
+    end
+    deactivate Svc
+
+    Ctrl --> Axios : 1.2.4.6: HTTP 200 + JSON
+    deactivate Ctrl
+
+    Axios --> APIClient : 1.2.4.7: res.data
+    deactivate Axios
+
+    APIClient --> AuthHook : 1.2.4.8: ApiResponse<LoginResponse>
+    deactivate APIClient
+
+    AuthHook -> AuthHook : 1.2.4.9: Luu token vao localStorage
+    note right: localStorage.setItem('accessToken', token)\nlocalStorage.setItem('refreshToken', refreshToken)
+    AuthHook -> AuthHook : 1.2.4.10: setQueryData('authUser', userInfo)
+    AuthHook --> UI : 1.2.4.11: Thanh cong
+    deactivate AuthHook
+
+    UI -> UI : 1.2.4.12: router.push('/dashboard')
+    deactivate UI
+end
+
+== 2: Dang nhap (POST /api/Auth/login - Public) ==
+
+User -> UI : 2: Mo trang Login (/login)
+activate UI
+
+UI --> User : 2.1: Hien thi form: Email/Username + Password + Remember me
+User -> UI : 2.2: Nhap thong tin va submit
+activate UI
+
+UI -> UI : 2.2.1: Validate (required fields)
+UI -> AuthHook : 2.2.2: login({ username: email, password })
+activate AuthHook
+
+AuthHook -> APIClient : 2.2.3: authService.login(data)
+activate APIClient
+
+APIClient -> Axios : 2.2.4: api.post('/Auth/login', data)
+activate Axios
+
+Axios -> Ctrl : 2.2.5: HTTP POST /api/Auth/login
+activate Ctrl
+
+Ctrl -> Svc : 2.2.6: LoginAsync(loginRequest)
+activate Svc
+
+Svc -> UoW : 2.2.6.1: Users.GetQueryable()\n.Include(UserRoles).ThenInclude(Role)\n.IgnoreQueryFilters()\n.FirstOrDefaultAsync(u => u.Username == username OR u.Email == username)
+activate UoW
+UoW -> DB : 2.2.6.1.1: SELECT ... FROM Users u\nLEFT JOIN UserRoles ur ON u.Id = ur.UserId\nLEFT JOIN Roles r ON ur.RoleId = r.Id\nWHERE u.Username = {username} OR u.Email = {username}
+activate DB
+DB --> UoW : 2.2.6.1.2: User + UserRoles + Roles hoac null
+deactivate DB
+deactivate UoW
+
+alt [2.2.6.2] Khong tim thay user hoac da bi xoa
+    Svc --> Ctrl : 2.2.6.2.1: ApiResponse.Fail("Invalid credentials", 401)
+else [2.2.6.3] Sai mat khau
+    note right: BCrypt.Net.BCrypt.Verify(password, user.PasswordHash)
+    Svc --> Ctrl : 2.2.6.3.1: ApiResponse.Fail("Invalid credentials", 401)
+else [2.2.6.4] Dung thong tin
+    Svc -> Svc : 2.2.6.4.1: GenerateJwtToken(user)
+    note right: JWT claims:\n- NameIdentifier: userId\n- Name: username\n- Email: email\n- Role: roles\nHet han: 24h\nKy bang HMACSHA256
+    Svc -> Svc : 2.2.6.4.2: GenerateRefreshToken() (32 byte random)
+    Svc -> UoW : 2.2.6.4.3: Luu RefreshToken + Expiry (7 ngay)
+    activate UoW
+    UoW -> DB : 2.2.6.4.3.1: UPDATE Users SET RefreshToken, RefreshTokenExpiry
+    activate DB
+    DB --> UoW : 2.2.6.4.3.2: success
+    deactivate DB
+    deactivate UoW
+
+    Svc -> Svc : 2.2.6.4.4: Lay roles: user.UserRoles.Select(ur => ur.Role.Name)
+    Svc --> Ctrl : 2.2.6.4.5: ApiResponse<LoginResponse>(token, refreshToken, userId, username, fullName, roles)
+    note right: LoginResponse gom:\n- Token (JWT)\n- RefreshToken\n- UserId, Username, FullName\n- Roles list
+end
+deactivate Svc
+
+Ctrl --> Axios : 2.2.7: HTTP 200/401 + JSON
+deactivate Ctrl
+
+Axios --> APIClient : 2.2.8: res.data
+deactivate Axios
+
+alt [2.2.9] Dang nhap that bai
+    APIClient --> AuthHook : 2.2.9.1: throw error
+    deactivate APIClient
+    AuthHook --> UI : 2.2.9.2: Error
+    UI --> User : 2.2.9.3: Hien thi error message
+else [2.2.10] Dang nhap thanh cong
+    APIClient --> AuthHook : 2.2.10.1: ApiResponse<LoginResponse>
+    deactivate APIClient
+    
+    AuthHook -> AuthHook : 2.2.10.2: Luu token vao localStorage
+    note right: accessToken + refreshToken
+    AuthHook -> AuthHook : 2.2.10.3: setQueryData('authUser', { userId, username, fullName, roles, role })
+    AuthHook --> UI : 2.2.10.4: Thanh cong
+    deactivate AuthHook
+    
+    UI -> UI : 2.2.10.5: window.location.href = '/dashboard'
+    deactivate UI
+end
+
+== 3: Lay profile (GET /api/Auth/profile - [Authorize]) ==
+
+UI -> AuthHook : 3: useAuth() -> getProfile()
+activate AuthHook
+
+AuthHook -> Axios : 3.1: api.get('/Auth/profile')
+activate Axios
+note right: Axios interceptor tu dong\nlay accessToken tu localStorage\nthem vao header Authorization
+
+Axios -> Ctrl : 3.2: HTTP GET /api/Auth/profile + Bearer token
+activate Ctrl
+
+Ctrl -> Ctrl : 3.2.1: Lay User tu HttpContext.Items["User"]
+note right: JwtMiddleware da validate token\nva attach User vao context
+
+alt [3.2.2] User == null
+    Ctrl --> Axios : 3.2.2.1: 401 Unauthorized
+    deactivate Ctrl
+    Axios --> AuthHook : 3.2.2.2: Error
+else [3.2.3] Co user
+    Ctrl -> Ctrl : 3.2.3.1: Lay role tu User.UserRoles
+    Ctrl --> Axios : 3.2.3.2: HTTP 200 + { id, username, email, fullName, phone, role, roles }
+    deactivate Ctrl
+    Axios --> AuthHook : 3.2.3.3: ApiResponse
+end
+deactivate Axios
+
+AuthHook -> AuthHook : 3.3: Luu user vao query cache
+AuthHook --> UI : 3.4: Tra ve user (AuthUser)
+deactivate AuthHook
+
+@enduml
