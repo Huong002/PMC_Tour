@@ -1,0 +1,57 @@
+stages:
+  - build
+  - deploy
+
+variables:
+  DOCKER_HOST: tcp://docker:2375/
+  DOCKER_TLS_CERTDIR: ""
+  DOCKER_OPTS: "--insecure-registry registry.dthu.edu.vn"
+  DOCKER_REGISTRY: "registry.dthu.edu.vn:5000"
+  PROJECT_PATH: "$DOCKER_REGISTRY/smartuni/faceid-service"
+  DOCKER_BUILDKIT: 1
+
+cache:
+  key: ${CI_COMMIT_REF_SLUG}
+  paths:
+    - /var/lib/docker
+
+build:
+  stage: build
+  services:
+    - name: docker:dind
+      command: ["--insecure-registry=registry.dthu.edu.vn:5000"]
+  before_script:
+    - echo "Logging in to Docker registry"
+    - docker login http://$DOCKER_REGISTRY -u $REGISTRY_USERNAME -p $REGISTRY_PASSWORD
+  script:
+    - echo "Building the Docker image"
+    - docker build -t $PROJECT_PATH:$CI_COMMIT_SHA .
+    - docker tag $PROJECT_PATH:$CI_COMMIT_SHA $PROJECT_PATH:latest
+    - docker push $PROJECT_PATH:$CI_COMMIT_SHA
+    - docker push $PROJECT_PATH:latest
+  only:
+    - main
+  
+deploy:
+  stage: deploy
+  image: ubuntu:latest
+  before_script:
+    - 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y && apt-get install -y iputils-ping )'
+    - eval $(ssh-agent -s)
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add - > /dev/null
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - '[[ -f /.dockerenv ]] && echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config'
+  script:
+    - ssh -vvvv -o StrictHostKeyChecking=no $SSH_USER@$SSH_HOST "ls ~"
+    - scp docker-compose.yml $SSH_USER@$SSH_HOST:/home/deploy/faceid-service
+    - scp .env $SSH_USER@$SSH_HOST:/home/deploy/faceid-service
+    - ssh $SSH_USER@$SSH_HOST "
+      docker login http://$DOCKER_REGISTRY -u $REGISTRY_USERNAME -p $REGISTRY_PASSWORD &&
+      cd /home/deploy/faceid-service &&
+      docker compose down &&
+      docker compose pull &&
+      docker compose up -d
+      "
+  only:
+    - main

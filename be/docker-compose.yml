@@ -1,0 +1,13 @@
+﻿version: '3.8'
+
+services:
+  faceidworker-service:
+    container_name: faceid-service
+    image: registry.dthu.edu.vn:5000/smartuni/faceid-service:latest
+    ports:
+      - "${APP_PORT}:8080"
+    env_file:
+      - .env
+    environment:
+      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT}
+      - ConnectionStrings__DefaultConnection=Host=${DB_HOST};Port=${DB_PORT};Database=${DB_DATABASE};Username=${DB_USERNAME};Password=${DB_PASSWORD}
