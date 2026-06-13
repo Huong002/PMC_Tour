@@ -26,4 +26,8 @@ export const tourService = {
     const res = await api.delete<ApiResponse<any>>(`/Tours/${id}`);
     return res.data;
   },
+  toggleActive: async (id: number) => {
+    const res = await api.patch<ApiResponse<any>>(`/Tours/${id}/toggle-active`);
+    return res.data;
+  },
 };

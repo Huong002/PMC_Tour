@@ -62,4 +62,13 @@ public class ToursController : ControllerBase
         var result = await _tourService.DeleteAsync(id);
         return StatusCode(result.StatusCode, result);
     }
+
+    [Authorize]
+    [HttpPatch("{id:int}/toggle-active")]
+    public async Task<IActionResult> ToggleActive(int id)
+    {
+        var userId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
+        var result = await _tourService.ToggleActiveAsync(id, userId);
+        return StatusCode(result.StatusCode, result);
+    }
 }

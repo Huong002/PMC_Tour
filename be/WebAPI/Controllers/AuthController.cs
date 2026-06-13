@@ -68,4 +68,13 @@ public class AuthController : ControllerBase
         var result = await _authService.ChangePasswordAsync(userId, request);
         return StatusCode(result.StatusCode, result);
     }
+
+    [Authorize]
+    [HttpPut("profile")]
+    public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileRequest request)
+    {
+        var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+        var result = await _authService.UpdateProfileAsync(userId, request);
+        return StatusCode(result.StatusCode, result);
+    }
 }

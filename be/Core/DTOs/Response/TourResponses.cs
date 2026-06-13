@@ -14,8 +14,10 @@ public class TourResponse
     public decimal PriceChild { get; set; }
     public decimal PriceInfant { get; set; }
     public int MaxPeople { get; set; }
+    public int RegisteredCount { get; set; }
     public decimal? SalePrice { get; set; }
     public bool IsActive { get; set; }
+    public Core.Enums.TourStatus Status { get; set; }
     public bool IsFeatured { get; set; }
     public string? Description { get; set; }
     public string? Included { get; set; }
@@ -40,6 +42,7 @@ public class TourSummaryResponse
     public decimal PriceAdult { get; set; }
     public decimal? SalePrice { get; set; }
     public bool IsActive { get; set; }
+    public Core.Enums.TourStatus Status { get; set; }
     public string? ImageUrl { get; set; }
     public DateTime CreatedAt { get; set; }
 }

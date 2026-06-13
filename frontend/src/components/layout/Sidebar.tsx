@@ -21,22 +21,22 @@ export function Sidebar() {
   const menuItems = [
     {
       href: '/dashboard',
-      label: 'Dashboard',
+      label: 'Bảng điều khiển',
       icon: 'dashboard',
     },
     {
       href: '/tours/manage',
-      label: 'Tour Management',
+      label: 'Quản lý Tour',
       icon: 'travel_explore',
     },
     {
       href: '/customers',
-      label: 'User Management',
+      label: 'Quản lý Người dùng',
       icon: 'group',
     },
     {
       href: '/registrations',
-      label: 'Registrations',
+      label: 'Đăng ký Tour',
       icon: 'pending_actions',
     },
   ];
@@ -50,7 +50,7 @@ export function Sidebar() {
         </div>
         <div>
           <h1 className="font-headline-md text-headline-md font-bold text-primary">VietTour</h1>
-          <p className="text-[10px] uppercase tracking-widest text-on-surface-variant font-bold">Staff Portal</p>
+          <p className="text-[10px] uppercase tracking-widest text-on-surface-variant font-bold">Cổng nhân viên</p>
         </div>
       </div>
 
@@ -87,28 +87,28 @@ export function Sidebar() {
           className="w-full bg-secondary hover:bg-secondary/90 text-on-secondary hover:text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition-all active:scale-95 shadow-soft mb-6"
         >
           <span className="material-symbols-outlined">add</span>
-          Create New Tour
+          Tạo Tour mới
         </Link>
         <div className="flex items-center justify-between gap-2 px-2">
-          <div className="flex items-center gap-3 overflow-hidden">
+          <Link href="/profile" className="flex items-center gap-3 overflow-hidden hover:opacity-85 transition-opacity flex-grow">
             <img
               alt="Admin Avatar"
-              className="w-10 h-10 rounded-full object-cover border-2 border-primary/20"
+              className="w-10 h-10 rounded-full object-cover border-2 border-primary/20 shrink-0"
               src="https://lh3.googleusercontent.com/aida-public/AB6AXuAcF4b0HjIQOggo9jnI7hO1MlazKWKTYP9nhl0JNZsEQzT2BRElZohOzjJ1aLjE6qW5Rlb9AThQcn0XdzMhkW3WQcoTIhHYLLwZh_V6mZ9Ua9okcWzFQCep21D69qPWVOW_bT8FJ4fLn9tzsiE6pXoJ-KH2TcnqBOqyn-RPD0WaQfc9KywCOIPlSSj6pR_KiIPJ5Rka4QUSh6wieXF2mgru7UwFUbmo6glFONLyF-xcz4QTOjR1rgyzRS5Wj9Vu4XXd355N7vn_yjE"
             />
             <div className="overflow-hidden text-left">
               <p className="font-label-md text-label-md font-bold text-on-surface truncate">
-                {user?.fullName || 'Admin User'}
+                {user?.fullName || 'Quản trị viên'}
               </p>
               <p className="text-[11px] text-on-surface-variant truncate font-medium">
-                {user?.role || 'VietTour Admin'}
+                {user?.role || 'Quản trị viên VietTour'}
               </p>
             </div>
-          </div>
+          </Link>
           <button 
             onClick={handleLogout} 
             className="p-1.5 text-on-surface-variant hover:text-error hover:bg-error/5 rounded-lg transition-colors"
-            title="Log out"
+            title="Đăng xuất"
           >
             <span className="material-symbols-outlined text-[20px]">logout</span>
           </button>

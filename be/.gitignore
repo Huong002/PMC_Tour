@@ -34,3 +34,7 @@ msbuild.wrn
 .vs/
 files
 UniversityData/
+
+# Configuration files
+[Aa]ppsettings.json
+[Aa]ppsettings.*.json

@@ -58,10 +58,29 @@ export default function CustomerDetailPage() {
     return (
       <div className="min-h-screen bg-background flex flex-col justify-center items-center">
         <span className="animate-spin rounded-full h-12 w-12 border-4 border-primary border-t-transparent mb-4"></span>
-        <p className="font-body-md text-on-surface-variant font-medium">Loading customer details...</p>
+        <p className="font-body-md text-on-surface-variant font-medium">Đang tải thông tin khách hàng...</p>
       </div>
     );
   }
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'Approved': return 'Đã duyệt';
+      case 'Pending': return 'Chờ duyệt';
+      case 'Completed': return 'Hoàn thành';
+      case 'Cancelled': return 'Đã hủy';
+      default: return status;
+    }
+  };
+
+  const getPaymentMethodLabel = (method: string) => {
+    switch (method?.toUpperCase()) {
+      case 'TRANSFER': return 'Chuyển khoản';
+      case 'CARD': return 'Thẻ tín dụng';
+      case 'CASH': return 'Tiền mặt';
+      default: return method;
+    }
+  };
 
   return (
     <AuthGuard allowedRoles={['ADMIN']}>
@@ -73,15 +92,15 @@ export default function CustomerDetailPage() {
         <main className="flex-1 ml-64 p-margin-desktop bg-surface min-h-screen text-left">
           {/* Header Section */}
           <AdminHeader
-            title={`Customer Profile: ${customerData.fullName}`}
-            description={`Manage account stats and tracking for customer ID: USR-00${customerData.id}`}
+            title={`Hồ sơ khách hàng: ${customerData.fullName}`}
+            description={`Quản lý thống kê tài khoản và theo dõi cho ID khách hàng: USR-00${customerData.id}`}
             actionButton={
               <button 
                 onClick={() => router.back()}
                 className="bg-white hover:bg-surface-container border border-outline-variant/60 text-on-surface font-bold px-5 py-2.5 rounded-xl flex items-center gap-2 transition-all active:scale-95 shadow-soft"
               >
                 <span className="material-symbols-outlined">arrow_back</span>
-                Back
+                Quay lại
               </button>
             }
           />
@@ -89,21 +108,21 @@ export default function CustomerDetailPage() {
           {/* Stats Summary Bento Grid */}
           <section className="grid grid-cols-1 md:grid-cols-4 gap-gutter mb-xl">
             <div className="bg-white p-lg rounded-xl custom-shadow border border-outline-variant/30">
-              <p className="font-label-md text-label-md text-on-surface-variant mb-1">Total Spent</p>
-              <p className="font-headline-md text-headline-md text-primary font-bold">${customerData.totalSpent}</p>
+              <p className="font-label-md text-label-md text-on-surface-variant mb-1">Tổng Chi Tiêu</p>
+              <p className="font-headline-md text-headline-md text-primary font-bold">{customerData.totalSpent?.toLocaleString('vi-VN')}đ</p>
             </div>
             <div className="bg-white p-lg rounded-xl custom-shadow border border-outline-variant/30">
-              <p className="font-label-md text-label-md text-on-surface-variant mb-1">Total Bookings</p>
+              <p className="font-label-md text-label-md text-on-surface-variant mb-1">Tổng Số Đặt Tour</p>
               <p className="font-headline-md text-headline-md text-on-surface font-semibold">{customerData.totalRegistrations}</p>
             </div>
             <div className="bg-white p-lg rounded-xl custom-shadow border border-outline-variant/30">
-              <p className="font-label-md text-label-md text-on-surface-variant mb-1">Completed Tours</p>
+              <p className="font-label-md text-label-md text-on-surface-variant mb-1">Tour Hoàn Thành</p>
               <p className="font-headline-md text-headline-md text-tertiary font-semibold">{customerData.completedRegistrations}</p>
             </div>
             <div className="bg-white p-lg rounded-xl custom-shadow border border-outline-variant/30">
-              <p className="font-label-md text-label-md text-on-surface-variant mb-1">Status</p>
+              <p className="font-label-md text-label-md text-on-surface-variant mb-1">Trạng Thái</p>
               <div className="mt-1">
-                <StatusBadge status={customerData.status} />
+                <StatusBadge status={customerData.status === 'Active' ? 'Active' : customerData.status} />
               </div>
             </div>
           </section>
@@ -118,7 +137,7 @@ export default function CustomerDetailPage() {
                   : 'border-transparent text-on-surface-variant hover:text-primary'
               }`}
             >
-              Account Details
+              Thông tin tài khoản
             </button>
             <button
               onClick={() => setActiveTab('registrations')}
@@ -128,7 +147,7 @@ export default function CustomerDetailPage() {
                   : 'border-transparent text-on-surface-variant hover:text-primary'
               }`}
             >
-              Booking History ({customerData.recentRegistrations?.length || 0})
+              Lịch sử đặt tour ({customerData.recentRegistrations?.length || 0})
             </button>
             <button
               onClick={() => setActiveTab('payments')}
@@ -138,7 +157,7 @@ export default function CustomerDetailPage() {
                   : 'border-transparent text-on-surface-variant hover:text-primary'
               }`}
             >
-              Payment Records ({customerData.recentPayments?.length || 0})
+              Lịch sử thanh toán ({customerData.recentPayments?.length || 0})
             </button>
           </div>
 
@@ -147,33 +166,33 @@ export default function CustomerDetailPage() {
             {activeTab === 'profile' && (
               <div className="space-y-lg">
                 <h3 className="font-title-lg text-title-lg text-primary font-bold border-b border-outline-variant/40 pb-3">
-                  Personal & Security Details
+                  Thông tin cá nhân & Bảo mật
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-lg text-body-md">
                   <div className="space-y-1">
-                    <span className="font-bold block text-on-surface-variant text-sm uppercase tracking-wider">Username / Email</span>
+                    <span className="font-bold block text-on-surface-variant text-sm uppercase tracking-wider">Tên đăng nhập / Email</span>
                     <span className="text-on-surface font-medium">{customerData.email}</span>
                   </div>
                   <div className="space-y-1">
-                    <span className="font-bold block text-on-surface-variant text-sm uppercase tracking-wider">Full Name</span>
+                    <span className="font-bold block text-on-surface-variant text-sm uppercase tracking-wider">Họ và tên</span>
                     <span className="text-on-surface font-medium">{customerData.fullName}</span>
                   </div>
                   <div className="space-y-1">
-                    <span className="font-bold block text-on-surface-variant text-sm uppercase tracking-wider">Phone Number</span>
-                    <span className="text-on-surface font-medium">{customerData.phone || 'N/A'}</span>
+                    <span className="font-bold block text-on-surface-variant text-sm uppercase tracking-wider">Số điện thoại</span>
+                    <span className="text-on-surface font-medium">{customerData.phone || 'Chưa cung cấp'}</span>
                   </div>
                   <div className="space-y-1">
-                    <span className="font-bold block text-on-surface-variant text-sm uppercase tracking-wider">Address</span>
-                    <span className="text-on-surface font-medium">{customerData.address || 'N/A'}</span>
+                    <span className="font-bold block text-on-surface-variant text-sm uppercase tracking-wider">Địa chỉ</span>
+                    <span className="text-on-surface font-medium">{customerData.address || 'Chưa cung cấp'}</span>
                   </div>
                   <div className="space-y-1">
-                    <span className="font-bold block text-on-surface-variant text-sm uppercase tracking-wider">Created Date</span>
-                    <span className="text-on-surface font-medium">{new Date(customerData.createdAt).toLocaleDateString()}</span>
+                    <span className="font-bold block text-on-surface-variant text-sm uppercase tracking-wider">Ngày tạo tài khoản</span>
+                    <span className="text-on-surface font-medium">{new Date(customerData.createdAt).toLocaleDateString('vi-VN')}</span>
                   </div>
                   <div className="space-y-1">
-                    <span className="font-bold block text-on-surface-variant text-sm uppercase tracking-wider">Last Login At</span>
+                    <span className="font-bold block text-on-surface-variant text-sm uppercase tracking-wider">Đăng nhập lần cuối</span>
                     <span className="text-on-surface font-medium">
-                      {customerData.lastLoginAt ? new Date(customerData.lastLoginAt).toLocaleString() : 'Never'}
+                      {customerData.lastLoginAt ? new Date(customerData.lastLoginAt).toLocaleString('vi-VN') : 'Chưa từng'}
                     </span>
                   </div>
                 </div>
@@ -185,11 +204,11 @@ export default function CustomerDetailPage() {
                 <table className="w-full text-left border-collapse">
                   <thead className="bg-surface-container-low border-b border-outline-variant/50">
                     <tr>
-                      <th className="px-6 py-4 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Booking ID</th>
-                      <th className="px-6 py-4 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Tour Title</th>
-                      <th className="px-6 py-4 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Booked Date</th>
-                      <th className="px-6 py-4 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Status</th>
-                      <th className="px-6 py-4 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Total Cost</th>
+                      <th className="px-6 py-4 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Mã đăng ký</th>
+                      <th className="px-6 py-4 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Tên tour</th>
+                      <th className="px-6 py-4 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Ngày đặt</th>
+                      <th className="px-6 py-4 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Trạng thái</th>
+                      <th className="px-6 py-4 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Tổng chi phí</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-outline-variant/20">
@@ -204,20 +223,20 @@ export default function CustomerDetailPage() {
                           <tr key={reg.id} className="hover:bg-surface-container-lowest transition-colors">
                             <td className="px-6 py-4 font-mono text-label-md font-bold text-on-surface-variant">{reg.code || `REG-${reg.id}`}</td>
                             <td className="px-6 py-4 font-bold text-primary">{reg.tourTitle}</td>
-                            <td className="px-6 py-4 text-on-surface-variant text-sm font-semibold">{new Date(reg.registeredAt).toLocaleDateString()}</td>
+                            <td className="px-6 py-4 text-on-surface-variant text-sm font-semibold">{new Date(reg.registeredAt).toLocaleDateString('vi-VN')}</td>
                             <td className="px-6 py-4">
                               <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${statusColor}`}>
-                                {reg.status}
+                                {getStatusLabel(reg.status)}
                               </span>
                             </td>
-                            <td className="px-6 py-4 font-bold text-on-surface">${reg.totalAmount}</td>
+                            <td className="px-6 py-4 font-bold text-on-surface">{reg.totalAmount?.toLocaleString('vi-VN')}đ</td>
                           </tr>
                         );
                       })
                     ) : (
                       <tr>
                         <td colSpan={5} className="px-6 py-4 text-center text-on-surface-variant">
-                          No bookings found for this customer.
+                          Không tìm thấy thông tin đặt tour nào cho khách hàng này.
                         </td>
                       </tr>
                     )}
@@ -231,11 +250,11 @@ export default function CustomerDetailPage() {
                 <table className="w-full text-left border-collapse">
                   <thead className="bg-surface-container-low border-b border-outline-variant/50">
                     <tr>
-                      <th className="px-6 py-4 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Transaction ID</th>
-                      <th className="px-6 py-4 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Method</th>
-                      <th className="px-6 py-4 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Paid Date</th>
-                      <th className="px-6 py-4 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Status</th>
-                      <th className="px-6 py-4 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Amount</th>
+                      <th className="px-6 py-4 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Mã giao dịch</th>
+                      <th className="px-6 py-4 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Phương thức</th>
+                      <th className="px-6 py-4 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Ngày thanh toán</th>
+                      <th className="px-6 py-4 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Trạng thái</th>
+                      <th className="px-6 py-4 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Số tiền</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-outline-variant/20">
@@ -243,20 +262,20 @@ export default function CustomerDetailPage() {
                       customerData.recentPayments.map((pay: any) => (
                         <tr key={pay.id} className="hover:bg-surface-container-lowest transition-colors">
                           <td className="px-6 py-4 font-mono text-label-md font-bold text-on-surface-variant">TXN-00{pay.id}</td>
-                          <td className="px-6 py-4 font-semibold text-sm">{pay.paymentMethod}</td>
-                          <td className="px-6 py-4 text-on-surface-variant text-sm font-semibold">{new Date(pay.paidAt).toLocaleDateString()}</td>
+                          <td className="px-6 py-4 font-semibold text-sm">{getPaymentMethodLabel(pay.paymentMethod)}</td>
+                          <td className="px-6 py-4 text-on-surface-variant text-sm font-semibold">{new Date(pay.paidAt).toLocaleDateString('vi-VN')}</td>
                           <td className="px-6 py-4">
                             <span className="px-3 py-1 rounded-full bg-tertiary/10 text-tertiary border-tertiary/20 text-[10px] font-bold uppercase tracking-wider border">
-                              {pay.status}
+                              {pay.status === 'Completed' ? 'Thành công' : pay.status}
                             </span>
                           </td>
-                          <td className="px-6 py-4 font-bold text-primary">${pay.amount}</td>
+                          <td className="px-6 py-4 font-bold text-primary">{pay.amount?.toLocaleString('vi-VN')}đ</td>
                         </tr>
                       ))
                     ) : (
                       <tr>
                         <td colSpan={5} className="px-6 py-4 text-center text-on-surface-variant">
-                          No transaction records found.
+                          Không tìm thấy lịch sử giao dịch nào.
                         </td>
                       </tr>
                     )}

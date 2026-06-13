@@ -154,6 +154,62 @@ public class AuthService : IAuthService
         return ApiResponse<bool>.Ok(true, "Password changed successfully");
     }
 
+    public async Task<ApiResponse<bool>> UpdateProfileAsync(int userId, UpdateProfileRequest request)
+    {
+        var user = await _unitOfWork.Users.GetByIdAsync(userId);
+        if (user == null)
+            return ApiResponse<bool>.Fail("User not found", 404);
+
+        if (user.Email != request.Email)
+        {
+            var emailExists = await _unitOfWork.Users.GetQueryable().AnyAsync(u => u.Email == request.Email && u.Id != userId);
+            if (emailExists)
+                return ApiResponse<bool>.Fail("Email already exists");
+        }
+
+        user.FullName = request.FullName;
+        user.Email = request.Email;
+        user.Phone = request.Phone;
+
+        var customer = await _unitOfWork.Customers.GetQueryable()
+            .FirstOrDefaultAsync(c => c.UserId == userId || c.Email == user.Email);
+
+        if (customer != null)
+        {
+            customer.FullName = request.FullName;
+            customer.Email = request.Email;
+            customer.Phone = request.Phone;
+            customer.Address = request.Address;
+            customer.DateOfBirth = request.DateOfBirth;
+            customer.Nationality = request.Nationality;
+            customer.PassportNumber = request.PassportNumber;
+            customer.IdCard = request.IdCard;
+            await _unitOfWork.Customers.UpdateAsync(customer);
+        }
+        else
+        {
+            // Tự động tạo Customer nếu chưa có
+            var newCustomer = new Customer
+            {
+                UserId = userId,
+                FullName = request.FullName,
+                Email = request.Email,
+                Phone = request.Phone,
+                Address = request.Address,
+                DateOfBirth = request.DateOfBirth,
+                Nationality = request.Nationality,
+                PassportNumber = request.PassportNumber,
+                IdCard = request.IdCard,
+                IsActive = true,
+                CreatedAt = System.DateTime.UtcNow
+            };
+            await _unitOfWork.Customers.AddAsync(newCustomer);
+        }
+
+        await _unitOfWork.SaveChangesAsync();
+        return ApiResponse<bool>.Ok(true, "Profile updated successfully");
+    }
+
     private string GenerateJwtToken(User user)
     {
         var jwtSettings = _configuration.GetSection("Jwt");

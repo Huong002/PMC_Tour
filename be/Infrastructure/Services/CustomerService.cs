@@ -24,7 +24,10 @@ public class CustomerService : ICustomerService
         var query = _unitOfWork.Customers.GetQueryable().AsQueryable();
 
         if (!string.IsNullOrEmpty(request.SearchTerm))
-            query = query.Where(c => c.FullName.Contains(request.SearchTerm) || c.Phone!.Contains(request.SearchTerm));
+        {
+            var search = request.SearchTerm.ToLower();
+            query = query.Where(c => c.FullName.ToLower().Contains(search) || c.Phone!.ToLower().Contains(search));
+        }
 
         var total = await query.CountAsync();
         var items = await query.OrderByDescending(c => c.CreatedAt)
@@ -75,11 +78,14 @@ public class CustomerService : ICustomerService
         return ApiResponse<CustomerResponse>.Ok(_mapper.Map<CustomerResponse>(customer), "Customer updated successfully");
     }
 
-    public async Task<ApiResponse<bool>> DeleteAsync(int id)
+    public async Task<ApiResponse<bool>> DeleteAsync(int id, int currentUserId)
     {
         var customer = await _unitOfWork.Customers.GetByIdAsync(id);
         if (customer == null)
             return ApiResponse<bool>.Fail("Customer not found", 404);
+
+        if (customer.UserId == currentUserId)
+            return ApiResponse<bool>.Fail("Bạn không thể tự khóa tài khoản của chính mình", 400);
 
         customer.IsDeleted = true;
         customer.DeletedAt = DateTime.UtcNow;
@@ -87,5 +93,31 @@ public class CustomerService : ICustomerService
         await _unitOfWork.SaveChangesAsync();
 
         return ApiResponse<bool>.Ok(true, "Customer deleted successfully");
+    }
+
+    public async Task<ApiResponse<CustomerResponse>> GetCurrentCustomerAsync(int userId)
+    {
+        var user = await _unitOfWork.Users.GetByIdAsync(userId);
+        if (user == null)
+            return ApiResponse<CustomerResponse>.Fail("User not found", 404);
+
+        var customer = await _unitOfWork.Customers.GetQueryable()
+            .FirstOrDefaultAsync(c => c.Email == user.Email && !c.IsDeleted);
+
+        if (customer == null)
+        {
+            customer = new Customer
+            {
+                FullName = user.FullName,
+                Email = user.Email,
+                Phone = user.Phone,
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow
+            };
+            await _unitOfWork.Customers.AddAsync(customer);
+            await _unitOfWork.SaveChangesAsync();
+        }
+
+        return ApiResponse<CustomerResponse>.Ok(_mapper.Map<CustomerResponse>(customer));
     }
 }

@@ -14,6 +14,7 @@ export interface TourDto {
   availableSlots: number;
   startDate: string;
   endDate: string;
+  durationDays?: number;
   createdAt: string;
 }
 

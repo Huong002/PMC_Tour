@@ -7,6 +7,7 @@ import { AuthGuard } from '../../components/layout/AuthGuard';
 import { Sidebar } from '../../components/layout/Sidebar';
 import { AdminHeader } from '../../components/layout/AdminHeader';
 import api from '../../services/api';
+import { useAuth } from '../../hooks/useAuth';
 
 interface CustomerItem {
   id: number;
@@ -21,6 +22,7 @@ interface CustomerItem {
 
 export default function CustomersPage() {
   const qc = useQueryClient();
+  const { user: currentUser } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [page, setPage] = useState(1);
 
@@ -122,7 +124,7 @@ export default function CustomersPage() {
                         <td className="px-6 py-4 text-on-surface-variant">{u.email}</td>
                         <td className="px-6 py-4 font-semibold text-label-sm">
                           <span className={`px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider border ${getRoleBadge(u.role)}`}>
-                            {u.role || 'USER'}
+                            {u.role?.toUpperCase() === 'ADMIN' ? 'Quản trị viên' : u.role?.toUpperCase() === 'STAFF' ? 'Nhân viên' : 'Khách hàng'}
                           </span>
                         </td>
                         <td className="px-6 py-4">
@@ -135,16 +137,30 @@ export default function CustomersPage() {
                             <Link href={`/customers/${u.id}`} className="p-2 text-on-surface-variant hover:text-primary transition-colors hover:bg-primary/5 rounded-lg" title="Xem Chi Tiết">
                               <span className="material-symbols-outlined">visibility</span>
                             </Link>
-                            <button
-                              onClick={() => toggleMutation.mutate(u.id)}
-                              disabled={toggleMutation.isPending}
-                              className={`p-2 rounded-lg transition-colors hover:bg-surface-container ${u.isActive ? 'text-error hover:text-error/85' : 'text-tertiary hover:text-tertiary/85'}`}
-                              title={u.isActive ? 'Khóa' : 'Mở Khóa'}
-                            >
-                              <span className="material-symbols-outlined">
-                                {u.isActive ? 'block' : 'check_circle'}
-                              </span>
-                            </button>
+                            {u.email?.toLowerCase() === currentUser?.email?.toLowerCase() ? (
+                              <button
+                                disabled
+                                className="p-2 rounded-lg text-outline-variant cursor-not-allowed opacity-40"
+                                title="Không thể tự khóa tài khoản của chính mình"
+                              >
+                                <span className="material-symbols-outlined">lock</span>
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => {
+                                  if (confirm(`Bạn có chắc chắn muốn ${u.isActive ? 'Khóa' : 'Mở khóa'} tài khoản của "${u.fullName}"?`)) {
+                                    toggleMutation.mutate(u.id);
+                                  }
+                                }}
+                                disabled={toggleMutation.isPending}
+                                className={`p-2 rounded-lg transition-colors hover:bg-surface-container ${u.isActive ? 'text-error hover:text-error/85 hover:bg-error/5' : 'text-tertiary hover:text-tertiary/85 hover:bg-tertiary/5'}`}
+                                title={u.isActive ? 'Khóa tài khoản' : 'Mở khóa tài khoản'}
+                              >
+                                <span className="material-symbols-outlined">
+                                  {u.isActive ? 'lock' : 'lock_open'}
+                                </span>
+                              </button>
+                            )}
                           </div>
                         </td>
                       </tr>

@@ -56,13 +56,13 @@ export default function AboutUs() {
           <div className="container mx-auto px-margin-desktop relative z-10">
             <div className="max-w-2xl">
               <h1 className="font-display-lg text-display-lg text-white mb-md drop-shadow-lg">
-                Discover the Soul of Vietnam
+                Khám Phá Tâm Hồn Việt Nam
               </h1>
               <p className="font-body-lg text-body-lg text-white/90 mb-lg drop-shadow-md">
-                We don't just organize trips; we curate deeply personal journeys that reveal the hidden rhythms of our beautiful homeland.
+                Chúng tôi không chỉ tổ chức các chuyến đi; chúng tôi kiến tạo những hành trình đậm chất cá nhân nhằm hé mở những nhịp điệu ẩn giấu của quê hương tươi đẹp.
               </p>
               <Link href="/tours" className="inline-block bg-secondary-container hover:bg-secondary text-white font-bold py-4 px-8 rounded-lg shadow-natural transition-all active:scale-95">
-                Explore Our Heritage
+                Khám Phá Di Sản Của Chúng Tôi
               </Link>
             </div>
           </div>
@@ -76,13 +76,13 @@ export default function AboutUs() {
                 <span className="material-symbols-outlined mr-2 text-[18px]">
                   favorite
                 </span>
-                Our Mission
+                Sứ mệnh của chúng tôi
               </div>
               <h2 className="font-headline-lg text-headline-lg text-primary">
-                Connecting travelers with the authentic heart of Vietnam
+                Kết nối du khách với trái tim chân thực của Việt Nam
               </h2>
               <p className="font-body-lg text-body-lg text-on-surface-variant leading-relaxed">
-                VietTour was born from a simple realization: that the most beautiful parts of Vietnam aren't always found on a map. Our mission is to bridge the gap between curious global travelers and the vibrant, living cultures of our local communities. We prioritize depth over distance and quality over quantity.
+                VietTour được ra đời từ một nhận thức đơn giản: rằng những phần đẹp nhất của Việt Nam không phải lúc nào cũng được tìm thấy trên bản đồ. Sứ mệnh của chúng tôi là cầu nối giữa những du khách quốc tế tò mò và nền văn hóa sống động của các cộng đồng địa phương. Chúng tôi ưu tiên chiều sâu hơn khoảng cách và chất lượng hơn số lượng.
               </p>
             </div>
             <div className="grid grid-cols-2 gap-md">
@@ -109,10 +109,10 @@ export default function AboutUs() {
           <div className="px-margin-desktop max-w-max-width mx-auto">
             <div className="text-center mb-xl">
               <h2 className="font-headline-lg text-headline-lg text-primary mb-sm">
-                The Pillars of Our Promise
+                Những Trụ Cột Trong Cam Kết Của Chúng Tôi
               </h2>
               <p className="text-on-surface-variant font-body-md">
-                Guided by integrity and a passion for our land.
+                Được dẫn dắt bởi sự chính trực và niềm đam mê dành cho mảnh đất quê hương.
               </p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-lg">
@@ -123,9 +123,9 @@ export default function AboutUs() {
                     verified_user
                   </span>
                 </div>
-                <h3 className="font-title-lg text-title-lg text-primary mb-sm">Reliability</h3>
+                <h3 className="font-title-lg text-title-lg text-primary mb-sm">Đáng tin cậy</h3>
                 <p className="text-on-surface-variant font-body-md">
-                  Precision in logistics and honesty in communication. We manage every detail so you can focus on the experience, backed by 24/7 on-ground support.
+                  Sự chính xác trong khâu hậu cần và trung thực trong giao tiếp. Chúng tôi quản lý từng chi tiết để bạn có thể tập trung vào trải nghiệm, được hỗ trợ 24/7 từ đội ngũ tại địa phương.
                 </p>
               </div>
               {/* Local Expertise */}
@@ -135,9 +135,9 @@ export default function AboutUs() {
                     travel_explore
                   </span>
                 </div>
-                <h3 className="font-title-lg text-title-lg text-primary mb-sm">Local Expertise</h3>
+                <h3 className="font-title-lg text-title-lg text-primary mb-sm">Chuyên gia bản địa</h3>
                 <p className="text-on-surface-variant font-body-md">
-                  Our guides are storytellers from the regions they lead. They share the nuances, the legends, and the secret spots only a local could know.
+                  Hướng dẫn viên của chúng tôi là những người kể chuyện từ chính vùng đất họ dẫn dắt. Họ chia sẻ các sắc thái, truyền thuyết và những điểm đến bí mật mà chỉ người bản địa mới biết.
                 </p>
               </div>
               {/* Sustainable Travel */}
@@ -147,9 +147,9 @@ export default function AboutUs() {
                     eco
                   </span>
                 </div>
-                <h3 className="font-title-lg text-title-lg text-primary mb-sm">Sustainable Travel</h3>
+                <h3 className="font-title-lg text-title-lg text-primary mb-sm">Du lịch bền vững</h3>
                 <p className="text-on-surface-variant font-body-md">
-                  We are committed to preserving Vietnam's natural beauty and supporting local economies through eco-conscious partnerships and fair trade practices.
+                  Chúng tôi cam kết bảo tồn vẻ đẹp tự nhiên của Việt Nam và hỗ trợ nền kinh tế địa phương thông qua các quan hệ đối tác có ý thức sinh thái và thực hành thương mại công bằng.
                 </p>
               </div>
             </div>
@@ -159,43 +159,43 @@ export default function AboutUs() {
         {/* Our Story Timeline */}
         <section className="py-xl px-margin-desktop max-w-max-width mx-auto">
           <h2 className="font-headline-lg text-headline-lg text-primary mb-xl text-center">
-            Our Journey
+            Hành Trình Của Chúng Tôi
           </h2>
           <div className="relative border-l-2 border-primary-container ml-8 md:ml-0 md:flex md:border-l-0 md:border-t-2 md:pt-8 md:justify-between space-y-xl md:space-y-0">
             {/* 2012 */}
             <div className="relative pl-8 md:pl-0 md:w-1/4">
               <div className="absolute -left-[9px] top-0 md:left-auto md:-top-[9px] md:right-auto w-4 h-4 rounded-full bg-primary ring-4 ring-primary-fixed"></div>
               <span className="block font-bold text-primary font-headline-md mb-2">2012</span>
-              <h4 className="font-title-lg text-title-lg mb-2">The Humble Start</h4>
+              <h4 className="font-title-lg text-title-lg mb-2">Khởi đầu khiêm tốn</h4>
               <p className="text-on-surface-variant font-body-md">
-                VietTour launches as a small family-run trekking agency in Sapa, focused on authentic homestay experiences.
+                VietTour ra mắt với tư cách là một đại lý đi bộ trekking nhỏ do gia đình tự điều hành tại Sa Pa, tập trung vào trải nghiệm homestay bản địa.
               </p>
             </div>
             {/* 2016 */}
             <div className="relative pl-8 md:pl-0 md:w-1/4">
               <div className="absolute -left-[9px] top-0 md:left-auto md:-top-[9px] md:right-auto w-4 h-4 rounded-full bg-primary ring-4 ring-primary-fixed"></div>
               <span className="block font-bold text-primary font-headline-md mb-2">2016</span>
-              <h4 className="font-title-lg text-title-lg mb-2">Nationwide Expansion</h4>
+              <h4 className="font-title-lg text-title-lg mb-2">Mở rộng toàn quốc</h4>
               <p className="text-on-surface-variant font-body-md">
-                We expanded our operations across all 63 provinces, establishing dedicated logistics hubs in Hanoi and Da Nang.
+                Chúng tôi mở rộng hoạt động trên toàn bộ 63 tỉnh thành, thành lập các trung tâm hậu cần chuyên dụng tại Hà Nội và Đà Nẵng.
               </p>
             </div>
             {/* 2020 */}
             <div className="relative pl-8 md:pl-0 md:w-1/4">
               <div className="absolute -left-[9px] top-0 md:left-auto md:-top-[9px] md:right-auto w-4 h-4 rounded-full bg-primary ring-4 ring-primary-fixed"></div>
               <span className="block font-bold text-primary font-headline-md mb-2">2020</span>
-              <h4 className="font-title-lg text-title-lg mb-2">Digital Transformation</h4>
+              <h4 className="font-title-lg text-title-lg mb-2">Chuyển đổi số</h4>
               <p className="text-on-surface-variant font-body-md">
-                Launching our smart booking platform to allow travelers to customize their itineraries with real-time availability.
+                Ra mắt nền tảng đặt tour thông minh cho phép du khách tùy chỉnh lịch trình với tình trạng chỗ trống theo thời gian thực.
               </p>
             </div>
             {/* 2024 */}
             <div className="relative pl-8 md:pl-0 md:w-1/4">
               <div className="absolute -left-[9px] top-0 md:left-auto md:-top-[9px] md:right-auto w-4 h-4 rounded-full bg-primary ring-4 ring-primary-fixed"></div>
               <span className="block font-bold text-primary font-headline-md mb-2">2024</span>
-              <h4 className="font-title-lg text-title-lg mb-2">Pioneering Sustainability</h4>
+              <h4 className="font-title-lg text-title-lg mb-2">Tiên phong bền vững</h4>
               <p className="text-on-surface-variant font-body-md">
-                Committed to 100% plastic-free tours and launching the 'Green Vietnam' reforestation initiative.
+                Cam kết tổ chức các tour du lịch 100% không dùng đồ nhựa và triển khai sáng kiến trồng rừng 'Green Vietnam'.
               </p>
             </div>
           </div>
@@ -206,10 +206,10 @@ export default function AboutUs() {
           <div className="px-margin-desktop max-w-max-width mx-auto">
             <div className="mb-xl">
               <h2 className="font-headline-lg text-headline-lg text-primary mb-sm">
-                The Faces of VietTour
+                Những Gương Mặt Của VietTour
               </h2>
               <p className="text-on-surface-variant font-body-md">
-                Passionate travelers, expert fixers, and local storytellers.
+                Những người yêu thích du lịch đầy đam mê, những chuyên gia điều hành dày dặn kinh nghiệm và những người kể chuyện bản địa.
               </p>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-lg">
@@ -223,12 +223,12 @@ export default function AboutUs() {
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-primary/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-md">
                     <p className="text-white font-label-sm italic">
-                      "Travel is the only thing you buy that makes you richer."
+                      "Du lịch là thứ duy nhất bạn mua mà giúp bạn trở nên giàu có hơn."
                     </p>
                   </div>
                 </div>
-                <h4 className="font-title-lg text-title-lg text-primary">Minh Nguyen</h4>
-                <p className="text-on-surface-variant font-label-md">Founder & CEO</p>
+                <h4 className="font-title-lg text-title-lg text-primary">Minh Nguyễn</h4>
+                <p className="text-on-surface-variant font-label-md">Nhà sáng lập & Giám đốc điều hành</p>
               </div>
               {/* Team Member 2 */}
               <div className="group">
@@ -240,12 +240,12 @@ export default function AboutUs() {
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-primary/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-md">
                     <p className="text-white font-label-sm italic">
-                      "Logistics should be invisible; the experience should be unforgettable."
+                      "Hậu cần nên được ẩn đi; trải nghiệm mới là thứ không thể nào quên."
                     </p>
                   </div>
                 </div>
-                <h4 className="font-title-lg text-title-lg text-primary">Lan Tran</h4>
-                <p className="text-on-surface-variant font-label-md">Head of Operations</p>
+                <h4 className="font-title-lg text-title-lg text-primary">Lan Trần</h4>
+                <p className="text-on-surface-variant font-label-md">Trưởng bộ phận Vận hành</p>
               </div>
               {/* Team Member 3 */}
               <div className="group">
@@ -257,12 +257,12 @@ export default function AboutUs() {
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-primary/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-md">
                     <p className="text-white font-label-sm italic">
-                      "Every village has a story. I'm just here to help you hear it."
+                      "Mỗi bản làng đều có một câu chuyện. Tôi ở đây để giúp bạn lắng nghe câu chuyện đó."
                     </p>
                   </div>
                 </div>
-                <h4 className="font-title-lg text-title-lg text-primary">Tuan Pham</h4>
-                <p className="text-on-surface-variant font-label-md">Lead Travel Curator</p>
+                <h4 className="font-title-lg text-title-lg text-primary">Tuấn Phạm</h4>
+                <p className="text-on-surface-variant font-label-md">Trưởng nhóm Thiết kế Tour</p>
               </div>
               {/* Team Member 4 */}
               <div className="group">
@@ -274,12 +274,12 @@ export default function AboutUs() {
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-primary/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-md">
                     <p className="text-white font-label-sm italic">
-                      "Your comfort and joy are the metrics of our success."
+                      "Sự thoải mái và niềm vui của bạn là thước đo thành công của chúng tôi."
                     </p>
                   </div>
                 </div>
-                <h4 className="font-title-lg text-title-lg text-primary">Linh Do</h4>
-                <p className="text-on-surface-variant font-label-md">Customer Success</p>
+                <h4 className="font-title-lg text-title-lg text-primary">Linh Đỗ</h4>
+                <p className="text-on-surface-variant font-label-md">Hỗ trợ khách hàng</p>
               </div>
             </div>
           </div>
@@ -289,21 +289,21 @@ export default function AboutUs() {
       {/* Footer */}
       <footer className="bg-inverse-surface dark:bg-surface-container-lowest full-width bottom-0 mt-xl">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-gutter px-margin-desktop py-xl w-full max-w-max-width mx-auto">
-          <div className="space-y-md">
+          <div className="space-y-md text-left">
             <span className="font-headline-md text-headline-md text-surface-bright font-bold">VietTour</span>
             <p className="font-body-md text-surface-variant dark:text-on-surface-variant">
-              © 2024 VietTour. All rights reserved. Professional, Inviting, and Dynamic travel experiences.
+              © 2024 VietTour. Bảo lưu mọi quyền. Trải nghiệm du lịch Chuyên nghiệp, Lôi cuốn và Năng động.
             </p>
           </div>
-          <div className="space-y-md">
-            <h5 className="text-on-primary dark:text-primary font-bold">Explore</h5>
+          <div className="space-y-md text-left">
+            <h5 className="text-on-primary dark:text-primary font-bold">Khám phá</h5>
             <ul className="space-y-sm">
               <li>
                 <Link
                   className="text-surface-variant dark:text-on-surface-variant hover:text-secondary-fixed-dim dark:hover:text-secondary transition-colors font-label-sm"
                   href="/tours"
                 >
-                  Tours
+                  Tour du lịch
                 </Link>
               </li>
               <li>
@@ -311,7 +311,7 @@ export default function AboutUs() {
                   className="text-surface-variant dark:text-on-surface-variant hover:text-secondary-fixed-dim dark:hover:text-secondary transition-colors font-label-sm"
                   href="/tours"
                 >
-                  Destinations
+                  Điểm đến
                 </Link>
               </li>
               <li>
@@ -319,17 +319,17 @@ export default function AboutUs() {
                   className="text-surface-variant dark:text-on-surface-variant hover:text-secondary-fixed-dim dark:hover:text-secondary transition-colors font-label-sm"
                   href="/tours"
                 >
-                  Promotions
+                  Ưu đãi
                 </Link>
               </li>
             </ul>
           </div>
-          <div className="space-y-md">
-            <h5 className="text-on-primary dark:text-primary font-bold">Company</h5>
+          <div className="space-y-md text-left">
+            <h5 className="text-on-primary dark:text-primary font-bold">Công ty</h5>
             <ul className="space-y-sm">
               <li>
                 <Link className="text-secondary-fixed dark:text-secondary font-bold font-label-sm" href="/about">
-                  About Us
+                  Về chúng tôi
                 </Link>
               </li>
               <li>
@@ -337,7 +337,7 @@ export default function AboutUs() {
                   className="text-surface-variant dark:text-on-surface-variant hover:text-secondary-fixed-dim dark:hover:text-secondary transition-colors font-label-sm"
                   href="/contact"
                 >
-                  Contact
+                  Liên hệ
                 </Link>
               </li>
               <li>
@@ -345,7 +345,7 @@ export default function AboutUs() {
                   className="text-surface-variant dark:text-on-surface-variant hover:text-secondary-fixed-dim dark:hover:text-secondary transition-colors font-label-sm"
                   href="/tours"
                 >
-                  Terms of Service
+                  Điều khoản dịch vụ
                 </Link>
               </li>
               <li>
@@ -353,20 +353,20 @@ export default function AboutUs() {
                   className="text-surface-variant dark:text-on-surface-variant hover:text-secondary-fixed-dim dark:hover:text-secondary transition-colors font-label-sm"
                   href="/tours"
                 >
-                  Privacy Policy
+                  Chính sách bảo mật
                 </Link>
               </li>
             </ul>
           </div>
-          <div className="space-y-md">
-            <h5 className="text-on-primary dark:text-primary font-bold">Support</h5>
+          <div className="space-y-md text-left">
+            <h5 className="text-on-primary dark:text-primary font-bold">Hỗ trợ</h5>
             <ul className="space-y-sm">
               <li>
                 <Link
                   className="text-surface-variant dark:text-on-surface-variant hover:text-secondary-fixed-dim dark:hover:text-secondary transition-colors font-label-sm"
                   href="/contact"
                 >
-                  Help Center
+                  Trung tâm trợ giúp
                 </Link>
               </li>
               <li>
@@ -374,7 +374,7 @@ export default function AboutUs() {
                   className="text-surface-variant dark:text-on-surface-variant hover:text-secondary-fixed-dim dark:hover:text-secondary transition-colors font-label-sm"
                   href="/tours"
                 >
-                  FAQs
+                  Hỏi đáp (FAQs)
                 </Link>
               </li>
             </ul>

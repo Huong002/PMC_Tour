@@ -133,6 +133,26 @@ body {
   font-family: var(--font-body-md);
 }
 
+/* ===== ẨN SCROLLBAR TOÀN CỤC (vẫn cuộn được) ===== */
+
+/* Chrome, Safari, Edge (Chromium) */
+*::-webkit-scrollbar {
+  width: 0px;
+  height: 0px;
+  background: transparent;
+}
+
+/* Firefox */
+* {
+  scrollbar-width: none;
+}
+
+/* IE / Edge cũ */
+* {
+  -ms-overflow-style: none;
+}
+
+
 .material-symbols-outlined {
   font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
   vertical-align: middle;
@@ -221,11 +241,12 @@ body {
 }
 
 .hover-lift {
-  transition: var(--transition-smooth);
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform, box-shadow;
 }
 
 .hover-lift:hover {
-  transform: translateY(-8px) rotate(0.5deg);
+  transform: translateY(-6px);
   box-shadow: var(--shadow-elevated);
 }
 

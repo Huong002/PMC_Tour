@@ -9,6 +9,7 @@ public class CreateItineraryRequest
     public string? Meals { get; set; }
     public string? Hotel { get; set; }
     public string? Activities { get; set; }
+    public string? Timeline { get; set; }
 }
 
 public class UpdateItineraryRequest
@@ -19,4 +20,5 @@ public class UpdateItineraryRequest
     public string? Meals { get; set; }
     public string? Hotel { get; set; }
     public string? Activities { get; set; }
+    public string? Timeline { get; set; }
 }

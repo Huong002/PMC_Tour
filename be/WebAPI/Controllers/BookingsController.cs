@@ -25,6 +25,14 @@ public class BookingsController : ControllerBase
         return StatusCode(result.StatusCode, result);
     }
 
+    [HttpGet("my")]
+    public async Task<IActionResult> GetMyBookings([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
+    {
+        var userId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
+        var result = await _bookingService.GetMyBookingsAsync(userId, page, pageSize);
+        return StatusCode(result.StatusCode, result);
+    }
+
     [HttpGet("{id:int}")]
     public async Task<IActionResult> GetById(int id)
     {

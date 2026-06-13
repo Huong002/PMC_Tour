@@ -45,19 +45,18 @@ export default function LoginPage() {
             </div>
             <span className="login-brand-name">VietTour</span>
           </div>
-          <h1 className="login-headline">Explore the Soul of Vietnam.</h1>
+          <h1 className="login-headline">Khám phá Tâm hồn Việt Nam.</h1>
           <p className="login-subtext">
-            Log in to access your curated travel itineraries, manage exclusive
-            bookings, and discover hidden gems across the S-shaped land.
+            Đăng nhập để truy cập lịch trình du lịch được thiết kế riêng, quản lý các lượt đặt tour độc quyền và khám phá những viên ngọc ẩn giấu trên khắp mảnh đất hình chữ S.
           </p>
           <div className="login-badges">
             <div className="login-badge">
               <span className="material-symbols-outlined">verified_user</span>
-              <span>Professional Logistics</span>
+              <span>Hậu cần Chuyên nghiệp</span>
             </div>
             <div className="login-badge">
               <span className="material-symbols-outlined">explore</span>
-              <span>Authentic Experiences</span>
+              <span>Trải nghiệm Đích thực</span>
             </div>
           </div>
         </div>

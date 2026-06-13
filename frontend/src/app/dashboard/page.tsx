@@ -60,7 +60,7 @@ export default function DashboardPage() {
 
   const formatDate = (dateStr: string) => {
     if (!dateStr) return '—';
-    return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    return new Date(dateStr).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
   };
 
   return (
@@ -70,11 +70,11 @@ export default function DashboardPage() {
 
         <main className="flex-1 ml-64 p-margin-desktop bg-surface min-h-screen">
           <AdminHeader
-            title="Staff Dashboard"
-            description="Welcome back. Here's an overview of VietTour's metrics today."
+            title="Bảng điều khiển Nhân viên"
+            description="Chào mừng trở lại. Dưới đây là tổng quan về các chỉ số của VietTour hôm nay."
             searchTerm={searchTerm}
             onSearchChange={setSearchTerm}
-            searchPlaceholder="Search requests..."
+            searchPlaceholder="Tìm kiếm yêu cầu..."
           />
 
           {/* Stats Bento Grid */}
@@ -229,10 +229,10 @@ export default function DashboardPage() {
           </section>
 
           <footer className="mt-xl border-t border-outline-variant/50 pt-lg pb-md flex flex-col sm:flex-row justify-between items-center gap-md text-on-surface-variant text-xs">
-            <span className="font-medium">© 2024 VietTour. All rights reserved. Professional Staff Portal.</span>
+            <span className="font-medium">© 2024 VietTour. Bảo lưu mọi quyền. Cổng thông tin nhân viên chuyên nghiệp.</span>
             <div className="flex gap-lg font-bold">
-              <Link className="hover:text-primary transition-colors" href="/contact">Help Center</Link>
-              <Link className="hover:text-primary transition-colors" href="/dashboard">System Status</Link>
+              <Link className="hover:text-primary transition-colors" href="/contact">Trung tâm trợ giúp</Link>
+              <Link className="hover:text-primary transition-colors" href="/dashboard">Trạng thái hệ thống</Link>
             </div>
           </footer>
         </main>

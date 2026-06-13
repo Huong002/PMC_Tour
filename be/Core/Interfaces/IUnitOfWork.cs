@@ -18,6 +18,7 @@ public interface IUnitOfWork : IDisposable
     IGenericRepository<Blog> Blogs { get; }
     IGenericRepository<Role> Roles { get; }
     IGenericRepository<BlogCategory> BlogCategories { get; }
+    IGenericRepository<ContactMessage> ContactMessages { get; }
 
     IGenericRepository<T> Repository<T>() where T : class;
 
