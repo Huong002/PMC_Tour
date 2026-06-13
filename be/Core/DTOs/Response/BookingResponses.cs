@@ -23,6 +23,28 @@ public class BookingResponse
     public List<PaymentResponse> Payments { get; set; } = new();
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
+    public BookingTourResponse? Tour { get; set; }
+    public BookingUserResponse? User { get; set; }
+}
+
+public class BookingTourResponse
+{
+    public int Id { get; set; }
+    public string Title { get; set; } = string.Empty;
+    public string Location { get; set; } = string.Empty;
+    public decimal Price { get; set; }
+    public DateTime StartDate { get; set; }
+    public DateTime EndDate { get; set; }
+    public List<TourImageResponse> Images { get; set; } = new();
+}
+
+public class BookingUserResponse
+{
+    public int Id { get; set; }
+    public string Username { get; set; } = string.Empty;
+    public string FullName { get; set; } = string.Empty;
+    public string Email { get; set; } = string.Empty;
+    public string Phone { get; set; } = string.Empty;
 }
 
 public class BookingDetailResponse

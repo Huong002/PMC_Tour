@@ -9,45 +9,58 @@ import { useAuth } from '../../../hooks/useAuth';
 import { Navbar } from '../../../components/layout/Navbar';
 import { Sidebar } from '../../../components/layout/Sidebar';
 import { AdminHeader } from '../../../components/layout/AdminHeader';
-import { registrationService } from '../../../services/registration.service';
+import { registrationService, bookingService, BookingStatusEnum } from '../../../services/registration.service';
 import { RegistrationDetailDto } from '../../../types/registration';
+import { getPlaceholderImage } from '../../../utils/image';
 
-const STATUS_MAP: Record<string, { label: string; badgeClass: string; neonClass: string }> = {
-  PENDING: { 
-    label: 'Chờ Duyệt',     
-    badgeClass: 'bg-primary/10 text-primary border-primary/20', 
+// Enum BookingStatus: Pending=0, Confirmed=1, InProgress=2, Completed=3, Cancelled=4, Refunded=5
+const STATUS_MAP: Record<number, { label: string; badgeClass: string; neonClass: string; icon: string }> = {
+  0: { 
+    label: 'Chờ Duyệt',
+    icon: 'hourglass_top',
+    badgeClass: 'bg-amber-500/10 text-amber-700 border-amber-400/30', 
     neonClass: 'bg-amber-500/5 text-amber-600 border-amber-500/20 neon-glow-secondary' 
   },
-  APPROVED: { 
-    label: 'Đã Xác Nhận',   
-    badgeClass: 'bg-primary-container/20 text-primary border-primary-container/30', 
+  1: { 
+    label: 'Đã Xác Nhận',
+    icon: 'check_circle',
+    badgeClass: 'bg-blue-500/10 text-blue-700 border-blue-400/30', 
     neonClass: 'bg-indigo-500/5 text-indigo-600 border-indigo-500/20 neon-glow-primary' 
   },
-  CONFIRMED: { 
-    label: 'Đang Diễn Ra',  
-    badgeClass: 'bg-secondary/10 text-secondary border-secondary/20', 
+  2: { 
+    label: 'Đang Diễn Ra',
+    icon: 'directions_run',
+    badgeClass: 'bg-secondary/10 text-secondary border-secondary/30', 
     neonClass: 'bg-amber-500/5 text-amber-600 border-amber-500/20 neon-glow-secondary' 
   },
-  COMPLETED: { 
-    label: 'Hoàn Thành',    
-    badgeClass: 'bg-tertiary/10 text-tertiary border-tertiary/20', 
+  3: { 
+    label: 'Hoàn Thành',
+    icon: 'verified',
+    badgeClass: 'bg-emerald-500/10 text-emerald-700 border-emerald-400/30', 
     neonClass: 'bg-emerald-500/5 text-emerald-600 border-emerald-500/20 neon-glow-tertiary' 
   },
-  CANCELLED: { 
-    label: 'Đã Hủy',        
-    badgeClass: 'bg-error/10 text-error border-error/20', 
+  4: { 
+    label: 'Đã Hủy',
+    icon: 'cancel',
+    badgeClass: 'bg-rose-500/10 text-rose-700 border-rose-400/30', 
     neonClass: 'bg-rose-500/5 text-rose-600 border-rose-500/20 neon-glow-error' 
   },
-  REJECTED: { 
-    label: 'Từ Chối',       
-    badgeClass: 'bg-error/10 text-error border-error/20', 
-    neonClass: 'bg-rose-500/5 text-rose-600 border-rose-500/20 neon-glow-error' 
+  5: { 
+    label: 'Hoàn Tiền',
+    icon: 'currency_exchange',
+    badgeClass: 'bg-purple-500/10 text-purple-700 border-purple-400/30', 
+    neonClass: 'bg-purple-500/5 text-purple-600 border-purple-500/20 neon-glow-primary' 
   },
-  NO_SHOW: { 
-    label: 'Vắng Mặt',      
-    badgeClass: 'bg-error/10 text-error border-error/20', 
-    neonClass: 'bg-rose-500/5 text-rose-600 border-rose-500/20 neon-glow-error' 
-  },
+};
+
+// Helper: parse status từ string hoặc number (API trả về int)
+const getStatusNum = (status: any): number => {
+  if (typeof status === 'number') return status;
+  const map: Record<string, number> = {
+    'pending': 0, 'confirmed': 1, 'inprogress': 2, 'in_progress': 2,
+    'completed': 3, 'cancelled': 4, 'canceled': 4, 'refunded': 5,
+  };
+  return map[String(status).toLowerCase()] ?? 0;
 };
 
 export default function BookingDetailPage() {
@@ -99,7 +112,7 @@ export default function BookingDetailPage() {
   });
 
   const cancelMutation = useMutation({
-    mutationFn: (bookingId: number) => registrationService.cancel(bookingId, { reason: cancelReason || 'Khách hàng tự hủy qua Web App' }),
+    mutationFn: (bookingId: number) => registrationService.cancel(bookingId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['booking', id] });
       setCancelModalOpen(false);
@@ -107,26 +120,39 @@ export default function BookingDetailPage() {
     }
   });
 
+  const refundMutation = useMutation({
+    mutationFn: (bookingId: number) => registrationService.refund(bookingId),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['booking', id] })
+  });
+
   const handleAdminAction = async (action: string) => {
     try {
       switch (action) {
         case 'approve':
+          // BR-03: Phê duyệt → Confirmed (1)
           await approveMutation.mutateAsync(id);
           break;
         case 'reject':
+          // BR-04: Từ chối → Cancelled (4)
           await rejectMutation.mutateAsync(id);
           break;
         case 'confirm':
+          // Confirmed → InProgress (2): bắt đầu tour
           await confirmMutation.mutateAsync(id);
           break;
         case 'complete':
+          // InProgress → Completed (3)
           await completeMutation.mutateAsync(id);
           break;
         case 'noShow':
           await noShowMutation.mutateAsync(id);
           break;
         case 'cancel':
-          await rejectMutation.mutateAsync(id); // Admin cancel calls reject
+          await cancelMutation.mutateAsync(id);
+          break;
+        case 'refund':
+          // BR-07: Hoàn tiền → Refunded (5)
+          await refundMutation.mutateAsync(id);
           break;
       }
     } catch (err) {
@@ -152,7 +178,7 @@ export default function BookingDetailPage() {
       <div className="min-h-screen bg-background flex flex-col justify-center items-center p-md text-center">
         <span className="material-symbols-outlined text-error text-[64px] mb-md">error</span>
         <h2 className="font-headline-md text-primary font-bold mb-xs">Không tìm thấy thông tin đăng ký</h2>
-        <p className="text-on-surface-variant mb-lg max-w-md">Có vẻ liên kết bị lỗi hoặc bạn không có quyền truy cập thông tin đặt tour này.</p>
+        <p className="text-on-surface-variant mb-lg max-w-[450px]">Có vẻ liên kết bị lỗi hoặc bạn không có quyền truy cập thông tin đặt tour này.</p>
         <button 
           onClick={() => router.back()} 
           className="bg-primary hover:bg-primary/90 text-white font-bold px-lg py-2.5 rounded-xl transition-smooth active:scale-95 shadow-sm"
@@ -173,20 +199,24 @@ export default function BookingDetailPage() {
     images: []
   };
 
-  const statusKey = (booking.status || 'PENDING').toUpperCase();
-  const statusInfo = STATUS_MAP[statusKey] || { 
-    label: booking.status, 
+  const statusNum = getStatusNum((booking as any).status ?? booking.status);
+  const statusInfo = STATUS_MAP[statusNum] || { 
+    label: String(booking.status), 
+    icon: 'info',
     badgeClass: 'bg-outline-variant/30 text-outline border-outline-variant/50', 
     neonClass: 'bg-outline-variant/30 text-outline border-outline-variant/50' 
   };
 
-  const tourImage = (tour as any).images?.[0]?.imageUrl || 'https://via.placeholder.com/800x400?text=VietTour';
+  const tourImage = (tour as any).images?.[0]?.imageUrl || getPlaceholderImage(800, 400, 'VietTour');
   const displayDeparture = tour.startDate
     ? new Date(tour.startDate).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })
     : 'Chưa xác định';
   const displayEnd = tour.endDate
     ? new Date(tour.endDate).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })
     : 'Chưa xác định';
+
+  const totalAmount = (booking as any).finalPrice ?? (booking as any).totalPrice ?? 0;
+  const depositAmount = (booking as any).payments?.filter((p: any) => p.status?.toLowerCase() === 'success' || p.status?.toLowerCase() === 'paid').reduce((sum: number, p: any) => sum + p.amount, 0) || 0;
 
   // UI rendering based on Role
   if (isAdminOrStaff) {
@@ -231,55 +261,60 @@ export default function BookingDetailPage() {
                   
                   {/* Action Buttons */}
                   <div className="flex flex-wrap gap-sm">
-                    {statusKey === 'PENDING' && (
+                    {/* BR-03: Pending → Duyệt (Confirmed) */}
+                    {statusNum === BookingStatusEnum.Pending && (
                       <>
                         <button
                           onClick={() => handleAdminAction('approve')}
-                          className="bg-primary hover:bg-primary-container text-white font-bold text-xs px-md py-2.5 rounded-xl active:scale-95 transition-all shadow-sm"
+                          className="bg-primary hover:bg-primary/90 text-white font-bold text-xs px-md py-2.5 rounded-xl active:scale-95 transition-all shadow-sm"
                         >
                           Duyệt Đăng Ký
                         </button>
+                        {/* BR-04: Từ chối → Cancelled */}
                         <button
                           onClick={() => handleAdminAction('reject')}
-                          className="border border-outline-variant hover:bg-error/10 hover:text-error text-on-surface-variant font-bold text-xs px-md py-2.5 rounded-xl active:scale-95 transition-all"
+                          className="border border-rose-300 hover:bg-rose-600 hover:text-white text-rose-600 font-bold text-xs px-md py-2.5 rounded-xl active:scale-95 transition-all"
                         >
                           Từ Chối
                         </button>
                       </>
                     )}
-                    {statusKey === 'APPROVED' && (
+                    {/* Confirmed → Bắt đầu tour (InProgress) */}
+                    {statusNum === BookingStatusEnum.Confirmed && (
                       <>
                         <button
                           onClick={() => handleAdminAction('confirm')}
                           className="bg-secondary hover:bg-secondary/90 text-white font-bold text-xs px-md py-2.5 rounded-xl active:scale-95 transition-all shadow-sm"
                         >
-                          Xác Nhận Đặt Cọc (Đoàn Đi)
+                          Bắt Đầu Tour
                         </button>
                         <button
                           onClick={() => handleAdminAction('cancel')}
-                          className="border border-outline-variant hover:bg-error/10 hover:text-error text-on-surface-variant font-bold text-xs px-md py-2.5 rounded-xl active:scale-95 transition-all"
+                          className="border border-rose-300 hover:bg-rose-600 hover:text-white text-rose-600 font-bold text-xs px-md py-2.5 rounded-xl active:scale-95 transition-all"
                         >
                           Hủy Đăng Ký
                         </button>
                       </>
                     )}
-                    {statusKey === 'CONFIRMED' && (
-                      <>
-                        <button
-                          onClick={() => handleAdminAction('complete')}
-                          className="bg-tertiary hover:bg-tertiary/90 text-white font-bold text-xs px-md py-2.5 rounded-xl active:scale-95 transition-all shadow-sm"
-                        >
-                          Hoàn Thành Tour
-                        </button>
-                        <button
-                          onClick={() => handleAdminAction('noShow')}
-                          className="border border-outline-variant hover:bg-error/10 hover:text-error text-on-surface-variant font-bold text-xs px-md py-2.5 rounded-xl active:scale-95 transition-all"
-                        >
-                          Đánh Dấu Vắng Mặt
-                        </button>
-                      </>
+                    {/* InProgress → Hoàn thành */}
+                    {statusNum === BookingStatusEnum.InProgress && (
+                      <button
+                        onClick={() => handleAdminAction('complete')}
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-md py-2.5 rounded-xl active:scale-95 transition-all shadow-sm"
+                      >
+                        Hoàn Thành Tour
+                      </button>
                     )}
-                    {(statusKey === 'COMPLETED' || statusKey === 'CANCELLED' || statusKey === 'REJECTED' || statusKey === 'NO_SHOW') && (
+                    {/* BR-07: Cancelled → Hoàn tiền (Refunded) */}
+                    {statusNum === BookingStatusEnum.Cancelled && (
+                      <button
+                        onClick={() => handleAdminAction('refund')}
+                        className="bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs px-md py-2.5 rounded-xl active:scale-95 transition-all shadow-sm"
+                      >
+                        Xử Lý Hoàn Tiền
+                      </button>
+                    )}
+                    {(statusNum === BookingStatusEnum.Completed || statusNum === BookingStatusEnum.Refunded) && (
                       <span className="text-xs text-on-surface-variant italic font-semibold border border-outline-variant/30 px-md py-2 rounded-xl bg-surface-container-low">
                         Hồ sơ đã đóng, không thể thay đổi
                       </span>
@@ -405,11 +440,11 @@ export default function BookingDetailPage() {
                       </div>
                       <div className="flex justify-between text-on-surface-variant font-medium">
                         <span>Số tiền cọc:</span>
-                        <span className="text-secondary font-bold">{booking.depositAmount?.toLocaleString('vi-VN') || 0}đ</span>
+                        <span className="text-secondary font-bold">{depositAmount?.toLocaleString('vi-VN') || 0}đ</span>
                       </div>
                       <div className="flex justify-between items-center border-t border-primary/10 pt-sm mt-xs">
                         <span className="font-bold text-on-surface">Tổng cộng</span>
-                        <span className="text-headline-md font-black text-primary">{booking.totalAmount?.toLocaleString('vi-VN') || 0}đ</span>
+                        <span className="text-headline-md font-black text-primary">{totalAmount?.toLocaleString('vi-VN') || 0}đ</span>
                       </div>
                     </div>
                   </div>
@@ -554,12 +589,12 @@ export default function BookingDetailPage() {
 
                     <div className="flex justify-between items-center text-xs text-on-surface-variant font-medium pt-sm border-t border-outline-variant/10">
                       <span>Phí Đặt Cọc (Đã cọc)</span>
-                      <span className="text-secondary font-bold">{booking.depositAmount?.toLocaleString('vi-VN') || 0}đ</span>
+                      <span className="text-secondary font-bold">{depositAmount?.toLocaleString('vi-VN') || 0}đ</span>
                     </div>
 
                     <div className="flex justify-between items-center text-sm font-bold pt-md border-t border-dashed border-outline-variant">
                       <span className="text-primary font-extrabold uppercase text-xs">Tổng số tiền</span>
-                      <span className="text-secondary text-lg font-black">{(booking.totalAmount || 0).toLocaleString('vi-VN')}đ</span>
+                      <span className="text-secondary text-lg font-black">{(totalAmount || 0).toLocaleString('vi-VN')}đ</span>
                     </div>
                   </div>
 
@@ -577,7 +612,7 @@ export default function BookingDetailPage() {
                   </div>
 
                   {/* Cancel Button for Customer */}
-                  {statusKey === 'PENDING' && (
+                  {statusNum === BookingStatusEnum.Pending && (
                     <button 
                       onClick={() => setCancelModalOpen(true)}
                       className="w-full bg-error/10 hover:bg-error hover:text-white text-error font-bold py-3.5 rounded-2xl transition-all active:scale-95 border border-error/20 flex items-center justify-center gap-2 text-xs"
@@ -636,7 +671,7 @@ export default function BookingDetailPage() {
         {/* Customer Cancel Booking Modal */}
         {cancelModalOpen && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-md bg-black/40 backdrop-blur-sm transition-opacity">
-            <div className="bg-white rounded-3xl p-xl shadow-elevated border border-outline-variant/20 max-w-md w-full text-left space-y-lg relative animate-[subtle-zoom_0.4s_ease-out]">
+            <div className="bg-white rounded-3xl p-xl shadow-elevated border border-outline-variant/20 max-w-[450px] w-full text-left space-y-lg relative animate-[subtle-zoom_0.4s_ease-out]">
               <button 
                 onClick={() => setCancelModalOpen(false)} 
                 className="absolute top-4 right-4 p-2 rounded-full hover:bg-surface-variant transition-colors"

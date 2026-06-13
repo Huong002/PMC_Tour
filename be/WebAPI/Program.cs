@@ -134,6 +134,14 @@ using (var scope = app.Services.CreateScope())
         "CREATE INDEX IF NOT EXISTS IX_Customers_UserId ON \"Customers\" (\"UserId\")");
     // NOTE: Không tự gán UserId = Id vì Customer.Id ≠ User.Id (sẽ vi phạm FK)
     // UserId được set đúng khi user đăng ký qua API
+
+    // Ensure Itinerary.Timeline column exists (for timeline feature)
+    await db.Database.ExecuteSqlRawAsync(
+        "ALTER TABLE \"Itineraries\" ADD COLUMN IF NOT EXISTS \"Timeline\" text NULL");
+
+    // Ensure Tour.Status column exists (for tour status feature)
+    await db.Database.ExecuteSqlRawAsync(
+        "ALTER TABLE \"Tours\" ADD COLUMN IF NOT EXISTS \"Status\" integer NOT NULL DEFAULT 0");
 }
 
 // ===== Middleware Pipeline =====

@@ -27,7 +27,10 @@ public class UserService : IUserService
             .AsQueryable();
 
         if (!string.IsNullOrEmpty(request.SearchTerm))
-            query = query.Where(u => u.Username.Contains(request.SearchTerm) || u.FullName.Contains(request.SearchTerm));
+        {
+            var search = request.SearchTerm.ToLower();
+            query = query.Where(u => u.Username.ToLower().Contains(search) || u.FullName.ToLower().Contains(search));
+        }
 
         var total = await query.CountAsync();
         var items = await query

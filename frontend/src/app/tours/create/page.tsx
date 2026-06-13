@@ -8,10 +8,16 @@ import { AuthGuard } from '../../../components/layout/AuthGuard';
 import { Sidebar } from '../../../components/layout/Sidebar';
 import { tourService } from '../../../services/tour.service';
 
+interface TimelineItem {
+  time: string;
+  activity: string;
+}
+
 interface ItineraryDay {
   day: number;
   title: string;
   description: string;
+  timeline?: TimelineItem[];
 }
 
 export default function CreateTourPage() {
@@ -34,7 +40,16 @@ export default function CreateTourPage() {
   });
 
   const [itinerary, setItinerary] = useState<ItineraryDay[]>([
-    { day: 1, title: 'Ngày 1 - Khởi hành', description: 'Đón khách tại điểm tập kết, di chuyển đến điểm đến và nhận phòng khách sạn.' },
+    {
+      day: 1,
+      title: 'Ngày 1 - Khởi hành',
+      description: 'Đón khách tại điểm tập kết, di chuyển đến điểm đến và nhận phòng khách sạn.',
+      timeline: [
+        { time: '08:00', activity: 'Đón khách tại điểm hẹn và di chuyển' },
+        { time: '12:00', activity: 'Dùng cơm trưa chào mừng' },
+        { time: '14:00', activity: 'Nhận phòng khách sạn và nghỉ ngơi' }
+      ]
+    },
   ]);
 
   const [submitSuccess, setSubmitSuccess] = useState(false);
@@ -86,11 +101,47 @@ export default function CreateTourPage() {
     );
   };
 
+  const addTimelineItem = (dayIndex: number) => {
+    setItinerary(prev => prev.map((day, idx) => {
+      if (idx !== dayIndex) return day;
+      const currentTimeline = day.timeline || [];
+      return {
+        ...day,
+        timeline: [...currentTimeline, { time: '', activity: '' }]
+      };
+    }));
+  };
+
+  const removeTimelineItem = (dayIndex: number, itemIndex: number) => {
+    setItinerary(prev => prev.map((day, idx) => {
+      if (idx !== dayIndex) return day;
+      return {
+        ...day,
+        timeline: (day.timeline || []).filter((_, i) => i !== itemIndex)
+      };
+    }));
+  };
+
+  const handleTimelineChange = (dayIndex: number, itemIndex: number, field: 'time' | 'activity', value: string) => {
+    setItinerary(prev => prev.map((day, idx) => {
+      if (idx !== dayIndex) return day;
+      const updatedTimeline = (day.timeline || []).map((item, i) => 
+        i === itemIndex ? { ...item, [field]: value } : item
+      );
+      return { ...day, timeline: updatedTimeline };
+    }));
+  };
+
   const addItineraryDay = () => {
     const newDay = itinerary.length + 1;
     setItinerary((prev) => [
       ...prev,
-      { day: newDay, title: `Ngày ${newDay} - Hoạt động`, description: 'Mô tả chi tiết các hoạt động trong ngày.' },
+      {
+        day: newDay,
+        title: `Ngày ${newDay} - Hoạt động`,
+        description: 'Mô tả chi tiết các hoạt động trong ngày.',
+        timeline: []
+      },
     ]);
     setFormData((prev) => ({ ...prev, durationDays: newDay, durationNights: newDay - 1 }));
   };
@@ -124,6 +175,7 @@ export default function CreateTourPage() {
       isFeatured: formData.isFeatured,
       description: formData.description,
       imageUrl: formData.imageUrl || undefined,
+      itinerary: JSON.stringify(itinerary),
     };
     createMutation.mutate(body);
   };
@@ -421,6 +473,54 @@ export default function CreateTourPage() {
                           placeholder="Chi tiết các hoạt động..."
                           rows={2}
                         />
+                      </div>
+
+                      {/* Timeline Items */}
+                      <div className="space-y-xs pt-xs border-t border-outline-variant/20 text-left">
+                        <div className="flex justify-between items-center">
+                          <label className="font-label-sm text-label-sm text-outline font-bold">Khung giờ hoạt động (Timeline)</label>
+                          <button
+                            type="button"
+                            onClick={() => addTimelineItem(index)}
+                            className="bg-primary/10 hover:bg-primary/25 text-primary px-2.5 py-1 rounded-lg text-[11px] font-bold flex items-center gap-0.5 transition-all"
+                          >
+                            <span className="material-symbols-outlined text-[14px]">add</span>
+                            Thêm giờ
+                          </button>
+                        </div>
+                        
+                        {(day.timeline || []).length > 0 ? (
+                          <div className="space-y-xs">
+                            {(day.timeline || []).map((item, timeIdx) => (
+                              <div key={timeIdx} className="flex gap-2 items-center">
+                                <input
+                                  type="text"
+                                  value={item.time}
+                                  onChange={(e) => handleTimelineChange(index, timeIdx, 'time', e.target.value)}
+                                  className="w-24 px-2 py-1.5 rounded-lg border border-outline-variant bg-white focus:border-primary outline-none text-xs font-semibold"
+                                  placeholder="Ví dụ: 08:00"
+                                />
+                                <input
+                                  type="text"
+                                  value={item.activity}
+                                  onChange={(e) => handleTimelineChange(index, timeIdx, 'activity', e.target.value)}
+                                  className="flex-1 px-2 py-1.5 rounded-lg border border-outline-variant bg-white focus:border-primary outline-none text-xs"
+                                  placeholder="Đón khách tại điểm hẹn..."
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => removeTimelineItem(index, timeIdx)}
+                                  className="text-error hover:bg-error/10 p-1.5 rounded-lg transition-all"
+                                  title="Xóa dòng"
+                                >
+                                  <span className="material-symbols-outlined text-[16px]">close</span>
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-[11px] text-on-surface-variant italic">Chưa có khung giờ nào được thiết lập. Hãy thêm khung giờ để hiển thị timeline.</p>
+                        )}
                       </div>
                     </div>
                   ))}

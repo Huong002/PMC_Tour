@@ -9,6 +9,7 @@ import { customerService } from '../../../services/customer.service';
 import { useAuth } from '../../../hooks/useAuth';
 import { Navbar } from '../../../components/layout/Navbar';
 import api from '../../../services/api';
+import { getPlaceholderImage } from '../../../utils/image';
 
 export default function TourDetailPage() {
   const { user } = useAuth();
@@ -84,11 +85,27 @@ export default function TourDetailPage() {
     duration: t.duration
       ? t.duration
       : `${t.durationDays || 0} Ngày ${t.durationNights || 0} Đêm`,
-    image: t.images?.[0]?.imageUrl || t.image || 'https://via.placeholder.com/800x400?text=VietTour',
-    itinerary: (t.itineraries || t.itinerary || []).map((i: any) => ({
-      title: i.title || `Ngày ${i.dayNumber || 0}`,
-      desc: i.description || i.desc || '',
-    })),
+    image: t.images?.[0]?.imageUrl || t.image || getPlaceholderImage(800, 400, 'VietTour'),
+    itinerary: (t.itineraries || t.itinerary || []).map((i: any) => {
+      let timelineParsed = [];
+      if (i.timeline) {
+        try {
+          timelineParsed = typeof i.timeline === 'string' ? JSON.parse(i.timeline) : i.timeline;
+        } catch (e) {
+          timelineParsed = [];
+        }
+      }
+      return {
+        title: i.title || `Ngày ${i.dayNumber || 0}`,
+        desc: i.description || i.desc || '',
+        timeline: Array.isArray(timelineParsed)
+          ? timelineParsed.map((item: any) => ({
+              time: item.time ?? item.Time ?? '',
+              activity: item.activity ?? item.Activity ?? ''
+            }))
+          : []
+      };
+    }),
     included: t.included || t.includedStr || '',
     excluded: t.excluded || t.excludedStr || '',
   };
@@ -228,9 +245,27 @@ export default function TourDetailPage() {
                     <div className="z-10 bg-primary/10 border border-primary neon-glow-primary w-8 h-8 rounded-full flex items-center justify-center shrink-0 mt-1">
                       <span className="text-[10px] font-black text-primary">{idx + 1}</span>
                     </div>
-                    <div className="pt-1">
+                    <div className="pt-1 flex-1">
                       <h3 className="font-title-lg text-title-lg text-primary mb-xs font-bold">{item.title}</h3>
                       <p className="text-on-surface-variant font-body-md text-sm leading-relaxed">{item.desc}</p>
+                      
+                      {/* Sub-timeline for hourly details */}
+                      {item.timeline && item.timeline.length > 0 && (
+                        <div className="mt-4 relative pl-4 border-l border-outline-variant/60 space-y-4">
+                          {item.timeline.map((timeItem: any, timeIdx: number) => (
+                            <div key={timeIdx} className="relative flex gap-sm items-start">
+                              {/* Sub-node dot */}
+                              <div className="absolute -left-[21.5px] top-1.5 w-2.5 h-2.5 rounded-full bg-white border-2 border-primary" />
+                              <span className="text-[11px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-lg border border-primary/20 shrink-0">
+                                {timeItem.time}
+                              </span>
+                              <p className="text-xs text-on-surface-variant font-medium leading-relaxed pt-0.5">
+                                {timeItem.activity}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}

@@ -31,7 +31,10 @@ public class TourService : ITourService
         if (filter.TourTypeId.HasValue)
             query = query.Where(t => t.TourTypeId == filter.TourTypeId.Value);
         if (!string.IsNullOrEmpty(filter.SearchTerm))
-            query = query.Where(t => t.Name.Contains(filter.SearchTerm) || t.Location.Contains(filter.SearchTerm));
+        {
+            var search = filter.SearchTerm.ToLower();
+            query = query.Where(t => t.Name.ToLower().Contains(search) || t.Location.ToLower().Contains(search));
+        }
         if (filter.PriceMin.HasValue)
             query = query.Where(t => (t.SalePrice ?? t.PriceAdult) >= filter.PriceMin.Value);
         if (filter.PriceMax.HasValue)
@@ -115,6 +118,8 @@ public class TourService : ITourService
         await _unitOfWork.Tours.AddAsync(tour);
         await _unitOfWork.SaveChangesAsync();
 
+        await SaveItinerariesAsync(tour.Id, request.Itinerary);
+
         var result = await GetByIdAsync(tour.Id);
         return ApiResponse<TourResponse>.Ok(result.Data!, "Tour created successfully");
     }
@@ -154,6 +159,11 @@ public class TourService : ITourService
         await _unitOfWork.Tours.UpdateAsync(tour);
         await _unitOfWork.SaveChangesAsync();
 
+        if (request.Itinerary != null)
+        {
+            await SaveItinerariesAsync(tour.Id, request.Itinerary);
+        }
+
         var result = await GetByIdAsync(tour.Id);
         return ApiResponse<TourResponse>.Ok(result.Data!, "Tour updated successfully");
     }
@@ -188,4 +198,66 @@ public class TourService : ITourService
         return ApiResponse<TourResponse>.Ok(result.Data!,
             tour.IsActive ? "Tour đã được mở đăng ký" : "Tour đã đóng đăng ký");
     }
+
+    private async Task SaveItinerariesAsync(int tourId, string? itineraryJson)
+    {
+        if (string.IsNullOrEmpty(itineraryJson)) return;
+
+        try
+        {
+            var options = new System.Text.Json.JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };
+            var items = System.Text.Json.JsonSerializer.Deserialize<List<ItineraryDto>>(itineraryJson, options);
+            if (items == null || !items.Any()) return;
+
+            // Xóa các itinerary cũ của Tour này
+            var oldItineraries = await _unitOfWork.Itineraries.GetQueryable()
+                .Where(i => i.TourId == tourId)
+                .ToListAsync();
+            foreach (var old in oldItineraries)
+            {
+                await _unitOfWork.Itineraries.DeleteAsync(old);
+            }
+
+            // Thêm mới
+            foreach (var item in items)
+            {
+                var timelineJson = item.Timeline != null && item.Timeline.Any()
+                    ? System.Text.Json.JsonSerializer.Serialize(item.Timeline)
+                    : null;
+
+                var itinerary = new Itinerary
+                {
+                    TourId = tourId,
+                    DayNumber = item.Day,
+                    Title = item.Title,
+                    Description = item.Description,
+                    Timeline = timelineJson,
+                    CreatedAt = DateTime.UtcNow
+                };
+                await _unitOfWork.Itineraries.AddAsync(itinerary);
+            }
+            await _unitOfWork.SaveChangesAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error processing itinerary JSON: {ex.Message}");
+        }
+    }
+}
+
+public class ItineraryDto
+{
+    public int Day { get; set; }
+    public string Title { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+    public List<TimelineItemDto>? Timeline { get; set; }
+}
+
+public class TimelineItemDto
+{
+    public string Time { get; set; } = string.Empty;
+    public string Activity { get; set; } = string.Empty;
 }

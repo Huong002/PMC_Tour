@@ -8,7 +8,7 @@ interface SearchBarProps {
 
 export function SearchBar({ placeholder = 'Tìm kiếm...', value, onChange }: SearchBarProps) {
   return (
-    <div className="relative w-full max-w-md">
+    <div className="relative w-full max-w-[450px]">
       <input
         type="text"
         placeholder={placeholder}

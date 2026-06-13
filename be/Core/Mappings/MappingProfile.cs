@@ -32,7 +32,25 @@ public class MappingProfile : Profile
 
         CreateMap<Booking, BookingResponse>()
             .ForMember(d => d.CustomerName, o => o.MapFrom(s => s.Customer.FullName))
-            .ForMember(d => d.TourName, o => o.MapFrom(s => s.Tour.Name));
+            .ForMember(d => d.TourName, o => o.MapFrom(s => s.Tour.Name))
+            .ForMember(d => d.Tour, o => o.MapFrom(s => s))
+            .ForMember(d => d.User, o => o.MapFrom(s => s));
+
+        CreateMap<Booking, BookingTourResponse>()
+            .ForMember(d => d.Id, o => o.MapFrom(s => s.TourId))
+            .ForMember(d => d.Title, o => o.MapFrom(s => s.Tour.Name))
+            .ForMember(d => d.Location, o => o.MapFrom(s => s.Tour.Location))
+            .ForMember(d => d.Price, o => o.MapFrom(s => s.Tour.PriceAdult))
+            .ForMember(d => d.StartDate, o => o.MapFrom(s => s.StartDate))
+            .ForMember(d => d.EndDate, o => o.MapFrom(s => s.EndDate))
+            .ForMember(d => d.Images, o => o.MapFrom(s => s.Tour.Images));
+
+        CreateMap<Booking, BookingUserResponse>()
+            .ForMember(d => d.Id, o => o.MapFrom(s => s.Customer.UserId ?? s.Customer.Id))
+            .ForMember(d => d.Username, o => o.MapFrom(s => s.Customer.User != null ? s.Customer.User.Username : s.Customer.Email))
+            .ForMember(d => d.FullName, o => o.MapFrom(s => s.Customer.FullName))
+            .ForMember(d => d.Email, o => o.MapFrom(s => s.Customer.Email))
+            .ForMember(d => d.Phone, o => o.MapFrom(s => s.Customer.Phone));
 
         CreateMap<CreateBookingRequest, Booking>();
         CreateMap<BookingDetail, BookingDetailResponse>();

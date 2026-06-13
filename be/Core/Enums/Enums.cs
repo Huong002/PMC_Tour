@@ -35,8 +35,10 @@ public enum ReviewStatus
 
 public enum TourStatus
 {
-    Active,
-    Inactive
+    Active,             // Mở đăng ký
+    Inactive,           // Đã đóng
+    Pending,            // Chờ xác nhận
+    Confirmed           // Đã xác nhận
 }
 
 public enum BlogStatus

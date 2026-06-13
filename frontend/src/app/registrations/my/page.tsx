@@ -161,7 +161,7 @@ export default function MyRegistrationsPage() {
 
           {selectedInvoice && (
             <div className="fixed inset-0 z-[100] flex items-center justify-center p-md bg-black/40 backdrop-blur-md transition-opacity">
-              <div className="bg-white rounded-3xl p-xl shadow-elevated border border-outline-variant/20 max-w-md w-full text-left space-y-lg relative animate-[subtle-zoom_0.4s_ease-out]">
+              <div className="bg-white rounded-3xl p-xl shadow-elevated border border-outline-variant/20 max-w-[450px] w-full text-left space-y-lg relative animate-[subtle-zoom_0.4s_ease-out]">
                 <button onClick={() => setSelectedInvoice(null)} 
                   className="absolute top-4 right-4 p-2 rounded-full hover:bg-surface-variant transition-colors">
                   <span className="material-symbols-outlined text-outline">close</span>

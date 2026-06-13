@@ -77,6 +77,7 @@ public class ApplicationDbContext : DbContext
             e.Property(x => x.PriceChild).HasColumnType("decimal(18,2)");
             e.Property(x => x.PriceInfant).HasColumnType("decimal(18,2)");
             e.Property(x => x.SalePrice).HasColumnType("decimal(18,2)");
+            e.Property(x => x.Status).HasDefaultValue(Core.Enums.TourStatus.Active);
             e.HasOne(x => x.TourType).WithMany(x => x.Tours).HasForeignKey(x => x.TourTypeId);
             e.HasOne(x => x.CreatedByUser).WithMany().HasForeignKey(x => x.CreatedBy).OnDelete(DeleteBehavior.NoAction);
             e.HasOne(x => x.UpdatedByUser).WithMany().HasForeignKey(x => x.UpdatedBy).OnDelete(DeleteBehavior.NoAction);
@@ -182,6 +183,7 @@ public class ApplicationDbContext : DbContext
             e.Property(x => x.Title).HasMaxLength(200);
             e.Property(x => x.Description).HasMaxLength(2000);
             e.Property(x => x.Activities).HasMaxLength(2000);
+            e.Property(x => x.Timeline).HasMaxLength(4000);
             e.HasOne(x => x.Tour).WithMany(x => x.Itineraries).HasForeignKey(x => x.TourId).OnDelete(DeleteBehavior.Cascade);
         });
 

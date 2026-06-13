@@ -11,6 +11,7 @@ public class Itinerary : BaseEntity
     public string? Meals { get; set; }
     public string? Hotel { get; set; }
     public string? Activities { get; set; }
+    public string? Timeline { get; set; }
 
     public Tour Tour { get; set; } = null!;
 }

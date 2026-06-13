@@ -1,11 +1,28 @@
 'use client';
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Navbar } from '../components/layout/Navbar';
 
 export default function Home() {
   const headerRef = useRef<HTMLElement>(null);
+  const router = useRouter();
+
+  const [location, setLocation] = useState('');
+  const [priceRange, setPriceRange] = useState('ALL');
+  const [startDate, setStartDate] = useState('');
+
+  const handleSearch = () => {
+    const params = new URLSearchParams();
+    if (location.trim()) {
+      params.set('search', location.trim());
+    }
+    if (priceRange !== 'ALL') {
+      params.set('price', priceRange);
+    }
+    router.push(`/tours?${params.toString()}`);
+  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -83,6 +100,8 @@ export default function Home() {
                     style={{ borderColor: 'var(--color-outline-variant)', color: 'var(--color-on-surface)' }}
                     placeholder="Bạn muốn đi đâu?"
                     type="text"
+                    value={location}
+                    onChange={(e) => setLocation(e.target.value)}
                     onFocus={(e) => { e.target.style.borderColor = 'var(--color-primary)'; }}
                     onBlur={(e) => { e.target.style.borderColor = 'var(--color-outline-variant)'; }}
                   />
@@ -109,6 +128,8 @@ export default function Home() {
                     style={{ borderColor: 'var(--color-outline-variant)', color: 'var(--color-on-surface)' }}
                     placeholder="Chọn ngày"
                     type="text"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
                     onFocus={(e) => { e.target.style.borderColor = 'var(--color-primary)'; }}
                     onBlur={(e) => { e.target.style.borderColor = 'var(--color-outline-variant)'; }}
                   />
@@ -131,22 +152,26 @@ export default function Home() {
                     payments
                   </span>
                   <select
-                    className="w-full pl-10 pr-4 py-3 rounded-lg border text-sm bg-white outline-none appearance-none transition-all"
+                    className="w-full pl-10 pr-10 py-3 rounded-lg border text-sm bg-white outline-none appearance-none transition-all"
                     style={{ borderColor: 'var(--color-outline-variant)', color: 'var(--color-on-surface)' }}
+                    value={priceRange}
+                    onChange={(e) => setPriceRange(e.target.value)}
                     onFocus={(e) => { e.target.style.borderColor = 'var(--color-primary)'; }}
                     onBlur={(e) => { e.target.style.borderColor = 'var(--color-outline-variant)'; }}
                   >
-                    <option>Bình dân</option>
-                    <option>Cận cao cấp</option>
-                    <option>Cao cấp</option>
+                    <option value="ALL">Tất cả mức giá</option>
+                    <option value="UNDER_200">Bình dân (Dưới 5 triệu)</option>
+                    <option value="200_500">Cận cao cấp (5 - 10 triệu)</option>
+                    <option value="OVER_500">Cao cấp (Trên 10 triệu)</option>
                   </select>
                 </div>
               </div>
 
               {/* Search button */}
-              <Link
-                href="/tours"
-                className="w-full md:w-auto flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-bold transition-all mt-4 md:mt-6 hover:opacity-90 active:scale-95"
+              <button
+                type="button"
+                onClick={handleSearch}
+                className="w-full md:w-auto flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-bold transition-all mt-4 md:mt-6 hover:opacity-90 active:scale-95 whitespace-nowrap"
                 style={{
                   background: 'var(--color-secondary-container)',
                   color: 'var(--color-on-secondary-container)',
@@ -154,7 +179,7 @@ export default function Home() {
               >
                 <span className="material-symbols-outlined">search</span>
                 Tìm kiếm
-              </Link>
+              </button>
             </div>
           </div>
         </section>
@@ -436,7 +461,7 @@ export default function Home() {
                 Tham gia cùng hơn 50.000 du khách để nhận những ưu đãi tốt nhất về các tour Việt Nam trực tiếp trong hộp thư của bạn.
               </p>
               <form
-                className="flex flex-col sm:flex-row gap-4 max-w-lg mx-auto"
+                className="flex flex-col sm:flex-row gap-4 max-w-[512px] mx-auto"
                 onSubmit={(e) => e.preventDefault()}
               >
                 <input

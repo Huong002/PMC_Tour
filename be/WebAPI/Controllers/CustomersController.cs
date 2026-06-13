@@ -49,7 +49,8 @@ public class CustomersController : ControllerBase
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> Delete(int id)
     {
-        var result = await _customerService.DeleteAsync(id);
+        var currentUserId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
+        var result = await _customerService.DeleteAsync(id, currentUserId);
         return StatusCode(result.StatusCode, result);
     }
 

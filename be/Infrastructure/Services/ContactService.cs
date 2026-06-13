@@ -35,9 +35,12 @@ public class ContactService : IContactService
         var query = _unitOfWork.ContactMessages.GetQueryable().AsQueryable();
 
         if (!string.IsNullOrEmpty(request.SearchTerm))
-            query = query.Where(c => c.Name.Contains(request.SearchTerm)
-                                     || c.Email.Contains(request.SearchTerm)
-                                     || c.Subject.Contains(request.SearchTerm));
+        {
+            var search = request.SearchTerm.ToLower();
+            query = query.Where(c => c.Name.ToLower().Contains(search)
+                                     || c.Email.ToLower().Contains(search)
+                                     || c.Subject.ToLower().Contains(search));
+        }
 
         var total = await query.CountAsync();
         var items = await query.Where(c => !c.IsDeleted)

@@ -7,6 +7,7 @@ import { AuthGuard } from '../../../components/layout/AuthGuard';
 import { Sidebar } from '../../../components/layout/Sidebar';
 import { AdminHeader } from '../../../components/layout/AdminHeader';
 import { tourService } from '../../../services/tour.service';
+import { getPlaceholderImage } from '../../../utils/image';
 
 interface ApiTour {
   id: number;
@@ -167,7 +168,7 @@ export default function ManageToursPage() {
                     </tr>
                   ) : tours.length > 0 ? (
                     tours.map((tour) => {
-                      const image = tour.images?.[0]?.imageUrl || 'https://via.placeholder.com/80x50?text=Tour';
+                      const image = tour.images?.[0]?.imageUrl || getPlaceholderImage(80, 50, 'Tour');
                       return (
                         <tr key={tour.id} className="hover:bg-surface-container-lowest transition-all hover:translate-x-1 duration-200">
                           <td className="px-6 py-4 font-mono text-label-md text-on-surface-variant">TOUR-{tour.id}</td>
@@ -222,8 +223,8 @@ export default function ManageToursPage() {
                                );
                              })()}
                            </td>
-                          <td className="px-6 py-4">
-                            <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border whitespace-nowrap ${
                               tour.isActive
                                 ? 'bg-tertiary/10 text-tertiary border-tertiary/20'
                                 : 'bg-error/10 text-error border-error/20'
@@ -236,13 +237,7 @@ export default function ManageToursPage() {
                           </td>
                           <td className="px-6 py-4 text-right">
                             <div className="flex justify-end gap-1">
-                              <Link
-                                href={`/tours/${tour.id}`}
-                                className="p-2 text-on-surface-variant hover:text-primary transition-colors hover:bg-primary/5 rounded-lg flex items-center"
-                                title="Xem Chi Tiết"
-                              >
-                                <span className="material-symbols-outlined text-[20px]">visibility</span>
-                              </Link>
+
                               <button
                                  onClick={() => handleToggleActive(tour)}
                                  disabled={toggleMutation.isPending}
