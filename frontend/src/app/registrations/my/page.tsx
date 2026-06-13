@@ -55,7 +55,7 @@ export default function MyRegistrationsPage() {
       tourId: reg.tourId,
       tourName: reg.tourName || 'Tour',
       departureDate: reg.startDate
-        ? new Date(reg.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+        ? new Date(reg.startDate).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })
         : '—',
       travelers: (reg.numAdults || 0) + (reg.numChildren || 0),
       totalPrice: reg.finalPrice || reg.totalPrice || 0,
@@ -72,9 +72,9 @@ export default function MyRegistrationsPage() {
 
         <main className="flex-grow max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop py-xl w-full">
           <div className="mb-xl text-left">
-            <span className="text-secondary font-bold text-label-sm uppercase tracking-widest block mb-xs">Customer Ledger</span>
-            <h1 className="font-display-lg text-display-lg text-primary font-extrabold tracking-tight">My Bookings</h1>
-            <p className="font-body-lg text-body-lg text-on-surface-variant">Track your registered adventure tours, invoices, and itineraries with ease.</p>
+            <span className="text-secondary font-bold text-label-sm uppercase tracking-widest block mb-xs">Thông tin giao dịch</span>
+            <h1 className="font-display-lg text-display-lg text-primary font-extrabold tracking-tight">Tour đã đặt của tôi</h1>
+            <p className="font-body-lg text-body-lg text-on-surface-variant">Dễ dàng theo dõi lịch trình du lịch, hóa đơn và trạng thái đăng ký tour của bạn.</p>
           </div>
 
           {isLoading ? (
@@ -125,7 +125,7 @@ export default function MyRegistrationsPage() {
                             </span>
                             <span className="flex items-center gap-1">
                               <span className="material-symbols-outlined text-sm text-outline">group</span>
-                              Khách: <strong className="text-on-surface">{booking.travelers} KH</strong>
+                              Khách: <strong className="text-on-surface">{booking.travelers} khách</strong>
                             </span>
                           </div>
                         </div>
@@ -134,10 +134,10 @@ export default function MyRegistrationsPage() {
                       <div className="border-t lg:border-t-0 pt-md lg:pt-0 border-outline-variant/30 flex flex-row lg:flex-col justify-between items-center lg:items-end gap-md shrink-0 text-left lg:text-right">
                         <div>
                           <span className="text-[10px] text-outline block uppercase tracking-wider font-semibold">Tổng Tiền</span>
-                          <span className="font-extrabold text-headline-md text-primary">${booking.totalPrice.toFixed(2)}</span>
+                          <span className="font-extrabold text-headline-md text-primary">{booking.totalPrice.toLocaleString('vi-VN')}đ</span>
                         </div>
                         <div className="flex gap-sm">
-                          <Link href={`/tours/${booking.tourId}`}
+                          <Link href={`/registrations/${booking.id}`}
                             className="px-md py-2 border border-outline-variant hover:bg-surface-variant/20 text-on-surface-variant font-bold text-xs rounded-2xl transition-smooth active:scale-95">
                             Chi Tiết
                           </Link>
@@ -167,7 +167,7 @@ export default function MyRegistrationsPage() {
                   <span className="material-symbols-outlined text-outline">close</span>
                 </button>
                 <div className="text-center space-y-xs pb-md border-b border-dashed border-outline-variant">
-                  <h4 className="font-headline-md text-primary font-bold tracking-tight">VIETTOUR RECEIPT</h4>
+                  <h4 className="font-headline-md text-primary font-bold tracking-tight">HÓA ĐƠN VIETTOUR</h4>
                   <p className="text-xs text-outline font-mono font-semibold">Hóa Đơn #{selectedInvoice.code}</p>
                   <p className="text-[10px] text-outline uppercase font-extrabold">KHỞI HÀNH: {selectedInvoice.departureDate}</p>
                 </div>
@@ -177,15 +177,15 @@ export default function MyRegistrationsPage() {
                       <p className="font-bold text-sm text-primary">{selectedInvoice.tourName}</p>
                       <p className="text-xs text-on-surface-variant font-semibold">{selectedInvoice.travelers} Khách</p>
                     </div>
-                    <span className="font-bold text-sm text-primary">${(selectedInvoice.totalPrice / 1.05).toFixed(2)}</span>
+                    <span className="font-bold text-sm text-primary">{Math.round(selectedInvoice.totalPrice / 1.05).toLocaleString('vi-VN')}đ</span>
                   </div>
                   <div className="flex justify-between items-center text-xs text-on-surface-variant font-medium pt-sm border-t border-outline-variant/10">
                     <span>Phí Dịch Vụ (5%)</span>
-                    <span>${(selectedInvoice.totalPrice - (selectedInvoice.totalPrice / 1.05)).toFixed(2)}</span>
+                    <span>{Math.round(selectedInvoice.totalPrice - (selectedInvoice.totalPrice / 1.05)).toLocaleString('vi-VN')}đ</span>
                   </div>
                   <div className="flex justify-between items-center text-sm font-bold pt-md border-t border-dashed border-outline-variant">
                     <span className="text-primary font-extrabold uppercase text-xs">Tổng Cộng</span>
-                    <span className="text-secondary text-lg font-black">${selectedInvoice.totalPrice.toFixed(2)}</span>
+                    <span className="text-secondary text-lg font-black">{selectedInvoice.totalPrice.toLocaleString('vi-VN')}đ</span>
                   </div>
                 </div>
                 <div className="p-sm rounded-xl bg-primary/5 text-center text-xs font-semibold text-primary flex items-center justify-center gap-xs">
@@ -204,26 +204,26 @@ export default function MyRegistrationsPage() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-gutter px-margin-desktop py-xl w-full max-w-max-width mx-auto text-left">
             <div className="space-y-md">
               <span className="font-headline-md text-headline-md text-surface-bright font-bold">VietTour</span>
-              <p className="font-body-md text-surface-variant dark:text-on-surface-variant">© 2024 VietTour. All rights reserved.</p>
+              <p className="font-body-md text-surface-variant dark:text-on-surface-variant">© 2024 VietTour. Bảo lưu mọi quyền.</p>
             </div>
             <div className="space-y-md">
-              <h5 className="text-on-primary dark:text-primary font-bold">Explore</h5>
+              <h5 className="text-on-primary dark:text-primary font-bold">Khám phá</h5>
               <ul className="space-y-sm">
-                <li><Link className="text-surface-variant dark:text-on-surface-variant hover:text-secondary-fixed-dim transition-colors font-label-sm" href="/tours">Tours</Link></li>
-                <li><Link className="text-surface-variant dark:text-on-surface-variant hover:text-secondary-fixed-dim transition-colors font-label-sm" href="/tours">Destinations</Link></li>
+                <li><Link className="text-surface-variant dark:text-on-surface-variant hover:text-secondary-fixed-dim transition-colors font-label-sm" href="/tours">Tour du lịch</Link></li>
+                <li><Link className="text-surface-variant dark:text-on-surface-variant hover:text-secondary-fixed-dim transition-colors font-label-sm" href="/tours">Điểm đến</Link></li>
               </ul>
             </div>
             <div className="space-y-md">
-              <h5 className="text-on-primary dark:text-primary font-bold">Company</h5>
+              <h5 className="text-on-primary dark:text-primary font-bold">Công ty</h5>
               <ul className="space-y-sm">
-                <li><Link className="text-surface-variant dark:text-on-surface-variant hover:text-secondary-fixed-dim transition-colors font-label-sm" href="/about">About Us</Link></li>
-                <li><Link className="text-surface-variant dark:text-on-surface-variant hover:text-secondary-fixed-dim transition-colors font-label-sm" href="/contact">Contact</Link></li>
+                <li><Link className="text-surface-variant dark:text-on-surface-variant hover:text-secondary-fixed-dim transition-colors font-label-sm" href="/about">Về chúng tôi</Link></li>
+                <li><Link className="text-surface-variant dark:text-on-surface-variant hover:text-secondary-fixed-dim transition-colors font-label-sm" href="/contact">Liên hệ</Link></li>
               </ul>
             </div>
             <div className="space-y-md">
-              <h5 className="text-on-primary dark:text-primary font-bold">Support</h5>
+              <h5 className="text-on-primary dark:text-primary font-bold">Hỗ trợ</h5>
               <ul className="space-y-sm">
-                <li><Link className="text-surface-variant dark:text-on-surface-variant hover:text-secondary-fixed-dim transition-colors font-label-sm" href="/contact">Help Center</Link></li>
+                <li><Link className="text-surface-variant dark:text-on-surface-variant hover:text-secondary-fixed-dim transition-colors font-label-sm" href="/contact">Trung tâm trợ giúp</Link></li>
                 <li><Link className="text-surface-variant dark:text-on-surface-variant hover:text-secondary-fixed-dim transition-colors font-label-sm" href="/tours">FAQs</Link></li>
               </ul>
             </div>

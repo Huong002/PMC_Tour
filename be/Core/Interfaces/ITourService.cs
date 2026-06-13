@@ -12,4 +12,5 @@ public interface ITourService
     Task<ApiResponse<TourResponse>> CreateAsync(CreateTourRequest request, int userId);
     Task<ApiResponse<TourResponse>> UpdateAsync(int id, UpdateTourRequest request, int userId);
     Task<ApiResponse<bool>> DeleteAsync(int id);
+    Task<ApiResponse<TourResponse>> ToggleActiveAsync(int id, int userId);
 }

@@ -1,12 +1,12 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { AuthGuard } from '../../../components/layout/AuthGuard';
-import { Sidebar } from '../../../components/layout/Sidebar';
-import { tourService } from '../../../services/tour.service';
+import { useParams, useRouter } from 'next/navigation';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { AuthGuard } from '../../../../components/layout/AuthGuard';
+import { Sidebar } from '../../../../components/layout/Sidebar';
+import { tourService } from '../../../../services/tour.service';
 
 interface ItineraryDay {
   day: number;
@@ -14,9 +14,11 @@ interface ItineraryDay {
   description: string;
 }
 
-export default function CreateTourPage() {
+export default function EditTourPage() {
+  const params = useParams();
   const router = useRouter();
   const queryClient = useQueryClient();
+  const tourId = Number(params.id);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -26,28 +28,68 @@ export default function CreateTourPage() {
     priceChild: 0,
     durationDays: 1,
     durationNights: 0,
-    maxPeople: 20,
+    maxPeople: 10,
     isActive: true,
     isFeatured: false,
     imageUrl: '',
     description: '',
   });
 
-  const [itinerary, setItinerary] = useState<ItineraryDay[]>([
-    { day: 1, title: 'Ngày 1 - Khởi hành', description: 'Đón khách tại điểm tập kết, di chuyển đến điểm đến và nhận phòng khách sạn.' },
-  ]);
+  const [itinerary, setItinerary] = useState<ItineraryDay[]>([]);
+  const [saveSuccess, setSaveSuccess] = useState(false);
 
-  const [submitSuccess, setSubmitSuccess] = useState(false);
+  // Fetch tour hiện tại
+  const { data: tourResponse, isLoading, isError } = useQuery({
+    queryKey: ['tourEdit', tourId],
+    queryFn: () => tourService.getById(tourId),
+    enabled: !!tourId,
+  });
 
-  const createMutation = useMutation({
-    mutationFn: (data: any) => tourService.create(data),
+  // Đổ dữ liệu vào form khi fetch xong
+  useEffect(() => {
+    const tour = (tourResponse as any)?.data;
+    if (!tour) return;
+
+    setFormData({
+      name: tour.name || '',
+      tourTypeId: tour.tourTypeId || 1,
+      location: tour.location || '',
+      priceAdult: tour.priceAdult || 0,
+      priceChild: tour.priceChild || 0,
+      durationDays: tour.durationDays || 1,
+      durationNights: tour.durationNights || 0,
+      maxPeople: tour.maxPeople || 10,
+      isActive: tour.isActive ?? true,
+      isFeatured: tour.isFeatured ?? false,
+      imageUrl: tour.images?.[0]?.imageUrl || '',
+      description: tour.description || '',
+    });
+
+    // Đổ lịch trình nếu có
+    if (tour.itineraries?.length > 0) {
+      setItinerary(
+        tour.itineraries.map((it: any) => ({
+          day: it.dayNumber,
+          title: it.title || `Ngày ${it.dayNumber}`,
+          description: it.description || '',
+        }))
+      );
+    } else {
+      setItinerary([{ day: 1, title: 'Ngày 1 - Khởi hành', description: 'Mô tả hoạt động ngày đầu tiên.' }]);
+    }
+  }, [tourResponse]);
+
+  // Mutation cập nhật
+  const updateMutation = useMutation({
+    mutationFn: (body: any) => tourService.update(tourId, body),
     onSuccess: () => {
-      setSubmitSuccess(true);
+      setSaveSuccess(true);
       queryClient.invalidateQueries({ queryKey: ['adminTours'] });
+      queryClient.invalidateQueries({ queryKey: ['tourEdit', tourId] });
       setTimeout(() => router.push('/tours/manage'), 1500);
     },
     onError: (err: any) => {
-      alert(err?.response?.data?.message || 'Có lỗi xảy ra khi tạo tour!');
+      alert(err?.response?.data?.message || 'Có lỗi xảy ra khi cập nhật tour!');
     },
   });
 
@@ -90,7 +132,7 @@ export default function CreateTourPage() {
     const newDay = itinerary.length + 1;
     setItinerary((prev) => [
       ...prev,
-      { day: newDay, title: `Ngày ${newDay} - Hoạt động`, description: 'Mô tả chi tiết các hoạt động trong ngày.' },
+      { day: newDay, title: `Ngày ${newDay} - Hoạt động`, description: 'Mô tả chi tiết các hoạt động.' },
     ]);
     setFormData((prev) => ({ ...prev, durationDays: newDay, durationNights: newDay - 1 }));
   };
@@ -125,10 +167,45 @@ export default function CreateTourPage() {
       description: formData.description,
       imageUrl: formData.imageUrl || undefined,
     };
-    createMutation.mutate(body);
+    updateMutation.mutate(body);
   };
 
-  const isSubmitting = createMutation.isPending;
+  // ---------- RENDER ----------
+  if (isLoading) {
+    return (
+      <AuthGuard allowedRoles={['STAFF', 'ADMIN']}>
+        <div className="bg-surface text-on-surface font-body-md min-h-screen flex">
+          <Sidebar />
+          <main className="flex-grow ml-64 p-margin-desktop flex items-center justify-center">
+            <div className="flex flex-col items-center gap-md text-on-surface-variant">
+              <span className="animate-spin rounded-full h-10 w-10 border-4 border-primary border-t-transparent" />
+              <span className="font-label-md">Đang tải thông tin tour...</span>
+            </div>
+          </main>
+        </div>
+      </AuthGuard>
+    );
+  }
+
+  if (isError || !tourResponse) {
+    return (
+      <AuthGuard allowedRoles={['STAFF', 'ADMIN']}>
+        <div className="bg-surface text-on-surface font-body-md min-h-screen flex">
+          <Sidebar />
+          <main className="flex-grow ml-64 p-margin-desktop flex items-center justify-center">
+            <div className="text-center space-y-md">
+              <span className="material-symbols-outlined text-error text-[64px]">error</span>
+              <p className="font-title-lg text-error">Không tìm thấy tour</p>
+              <Link href="/tours/manage" className="bg-primary text-white px-lg py-2.5 rounded-xl font-bold inline-flex items-center gap-xs">
+                <span className="material-symbols-outlined text-[18px]">arrow_back</span>
+                Quay lại danh sách
+              </Link>
+            </div>
+          </main>
+        </div>
+      </AuthGuard>
+    );
+  }
 
   return (
     <AuthGuard allowedRoles={['STAFF', 'ADMIN']}>
@@ -148,46 +225,51 @@ export default function CreateTourPage() {
                   Quản lý tour
                 </Link>
                 <span className="text-outline-variant">/</span>
-                <span className="text-on-surface font-semibold font-label-md">Thêm mới</span>
+                <span className="text-on-surface font-semibold font-label-md">Chỉnh sửa</span>
               </div>
-              <h2 className="font-headline-lg text-headline-lg text-primary">Tạo Tour Mới</h2>
+              <h2 className="font-headline-lg text-headline-lg text-primary">
+                Chỉnh Sửa Tour
+              </h2>
               <p className="font-body-md text-body-md text-on-surface-variant mt-xs">
-                Nhập thông tin chi tiết để xuất bản một trải nghiệm du lịch mới.
+                Cập nhật thông tin cho tour{' '}
+                <span className="font-bold text-on-surface">#{tourId}</span>
               </p>
             </div>
 
-            {/* Nút submit ở header */}
+            {/* Save button top */}
             <button
-              form="create-tour-form"
+              form="edit-tour-form"
               type="submit"
-              disabled={isSubmitting || submitSuccess}
+              disabled={updateMutation.isPending || saveSuccess}
               className={`px-xl py-2.5 rounded-xl font-bold active:scale-95 transition-all text-white flex items-center gap-xs shadow-md ${
-                submitSuccess ? 'bg-tertiary' : 'bg-primary hover:bg-primary/90'
+                saveSuccess
+                  ? 'bg-tertiary'
+                  : 'bg-primary hover:bg-primary/90'
               }`}
             >
-              {isSubmitting ? (
+              {updateMutation.isPending ? (
                 <>
                   <span className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
-                  <span>Đang tạo...</span>
+                  <span>Đang lưu...</span>
                 </>
-              ) : submitSuccess ? (
+              ) : saveSuccess ? (
                 <>
                   <span className="material-symbols-outlined text-[18px]">check_circle</span>
-                  <span>Đã tạo!</span>
+                  <span>Đã lưu!</span>
                 </>
               ) : (
                 <>
-                  <span className="material-symbols-outlined text-[18px]">add_circle</span>
-                  <span>Xuất bản Tour</span>
+                  <span className="material-symbols-outlined text-[18px]">save</span>
+                  <span>Lưu thay đổi</span>
                 </>
               )}
             </button>
           </header>
 
           {/* Form */}
-          <form id="create-tour-form" onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-12 gap-gutter pb-xl text-left">
+          <form id="edit-tour-form" onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-12 gap-gutter pb-xl text-left">
 
-            {/* ===== CỘT TRÁI ===== */}
+            {/* ===== CỘT TRÁI - Thông tin chung ===== */}
             <div className="lg:col-span-7 space-y-gutter">
 
               {/* Card: Thông tin cơ bản */}
@@ -199,9 +281,7 @@ export default function CreateTourPage() {
 
                 {/* Tên tour */}
                 <div className="space-y-xs">
-                  <label className="font-label-md text-label-md text-outline">
-                    Tên Tour <span className="text-error">*</span>
-                  </label>
+                  <label className="font-label-md text-label-md text-outline">Tên Tour <span className="text-error">*</span></label>
                   <input
                     name="name"
                     value={formData.name}
@@ -232,9 +312,7 @@ export default function CreateTourPage() {
                     </select>
                   </div>
                   <div className="space-y-xs">
-                    <label className="font-label-md text-label-md text-outline">
-                      Địa Điểm <span className="text-error">*</span>
-                    </label>
+                    <label className="font-label-md text-label-md text-outline">Địa Điểm <span className="text-error">*</span></label>
                     <input
                       name="location"
                       value={formData.location}
@@ -250,15 +328,12 @@ export default function CreateTourPage() {
                 {/* Giá */}
                 <div className="grid grid-cols-2 gap-md">
                   <div className="space-y-xs">
-                    <label className="font-label-md text-label-md text-outline">
-                      Giá Người Lớn (đ) <span className="text-error">*</span>
-                    </label>
+                    <label className="font-label-md text-label-md text-outline">Giá Người Lớn (đ) <span className="text-error">*</span></label>
                     <input
                       name="priceAdult"
-                      value={formData.priceAdult || ''}
+                      value={formData.priceAdult}
                       onChange={handleInputChange}
                       className="w-full px-md py-3 rounded-lg border border-outline-variant bg-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all font-body-md"
-                      placeholder="0"
                       min={0}
                       required
                       type="number"
@@ -268,17 +343,16 @@ export default function CreateTourPage() {
                     <label className="font-label-md text-label-md text-outline">Giá Trẻ Em (đ)</label>
                     <input
                       name="priceChild"
-                      value={formData.priceChild || ''}
+                      value={formData.priceChild}
                       onChange={handleInputChange}
                       className="w-full px-md py-3 rounded-lg border border-outline-variant bg-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all font-body-md"
-                      placeholder="0"
                       min={0}
                       type="number"
                     />
                   </div>
                 </div>
 
-                {/* Số ngày / đêm / max khách */}
+                {/* Số ngày / đêm / khách */}
                 <div className="grid grid-cols-3 gap-md">
                   <div className="space-y-xs">
                     <label className="font-label-md text-label-md text-outline">Số Ngày</label>
@@ -317,10 +391,11 @@ export default function CreateTourPage() {
                   </div>
                 </div>
 
-                {/* Checkboxes */}
+                {/* Checkboxes trạng thái */}
                 <div className="flex items-center gap-xl pt-xs">
                   <label className="flex items-center gap-xs cursor-pointer select-none group">
                     <input
+                      id="isActiveCheckbox"
                       name="isActive"
                       type="checkbox"
                       checked={formData.isActive}
@@ -333,6 +408,7 @@ export default function CreateTourPage() {
                   </label>
                   <label className="flex items-center gap-xs cursor-pointer select-none group">
                     <input
+                      id="isFeaturedCheckbox"
                       name="isFeatured"
                       type="checkbox"
                       checked={formData.isFeatured}
@@ -353,7 +429,7 @@ export default function CreateTourPage() {
                     value={formData.description}
                     onChange={handleInputChange}
                     className="w-full px-md py-3 rounded-lg border border-outline-variant bg-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all font-body-md"
-                    placeholder="Tóm tắt những điểm hấp dẫn của tour..."
+                    placeholder="Mô tả những điểm hấp dẫn của tour..."
                     rows={4}
                   />
                 </div>
@@ -380,7 +456,7 @@ export default function CreateTourPage() {
                   {itinerary.map((day, index) => (
                     <div
                       key={day.day}
-                      className="p-md bg-surface rounded-xl border border-outline-variant/30 space-y-sm"
+                      className="p-md bg-surface rounded-xl border border-outline-variant/30 space-y-sm relative"
                     >
                       <div className="flex justify-between items-center">
                         <span className="font-bold text-primary font-label-md flex items-center gap-xs">
@@ -428,7 +504,7 @@ export default function CreateTourPage() {
               </div>
             </div>
 
-            {/* ===== CỘT PHẢI ===== */}
+            {/* ===== CỘT PHẢI - Hình ảnh & Preview ===== */}
             <div className="lg:col-span-5 space-y-gutter">
 
               {/* Card: Hình ảnh */}
@@ -438,19 +514,18 @@ export default function CreateTourPage() {
                   Hình ảnh Tour
                 </h3>
 
+                {/* Drag drop zone */}
                 <div
-                  onClick={() => document.getElementById('tour-create-image-input')?.click()}
+                  onClick={() => document.getElementById('tour-edit-image-input')?.click()}
                   className={`border-2 border-dashed rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-all hover:bg-surface-container-low/50 relative overflow-hidden group ${
-                    formData.imageUrl
-                      ? 'min-h-[280px] border-primary/30'
-                      : 'min-h-[220px] border-outline-variant/60 hover:border-primary/60'
+                    formData.imageUrl ? 'min-h-[280px] border-primary/30' : 'min-h-[220px] border-outline-variant/60 hover:border-primary/60'
                   }`}
                 >
                   {formData.imageUrl ? (
                     <>
                       <img
                         src={formData.imageUrl}
-                        alt="Tour Preview"
+                        alt="Preview"
                         className="absolute inset-0 w-full h-full object-cover"
                       />
                       <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1">
@@ -474,11 +549,11 @@ export default function CreateTourPage() {
                 </div>
 
                 <input
-                  id="tour-create-image-input"
+                  id="tour-edit-image-input"
                   type="file"
                   accept="image/*"
-                  onChange={handleFileChange}
                   className="hidden"
+                  onChange={handleFileChange}
                 />
 
                 <div className="space-y-xs">
@@ -489,7 +564,7 @@ export default function CreateTourPage() {
                     name="imageUrl"
                     value={formData.imageUrl}
                     onChange={handleInputChange}
-                    placeholder="https://..."
+                    placeholder="https://... hoặc để trống"
                     className="w-full px-md py-2.5 rounded-xl border border-outline-variant bg-surface focus:border-primary outline-none text-xs font-medium"
                     type="text"
                   />
@@ -510,14 +585,9 @@ export default function CreateTourPage() {
                       className="w-full h-40 object-cover"
                     />
                   )}
-                  {!formData.imageUrl && (
-                    <div className="w-full h-32 bg-surface-container-low flex items-center justify-center">
-                      <span className="material-symbols-outlined text-outline text-[40px]">image</span>
-                    </div>
-                  )}
                   <div className="p-sm space-y-xs bg-surface">
                     <p className="font-bold text-on-surface text-sm line-clamp-2">
-                      {formData.name || <span className="text-outline italic">Tên tour...</span>}
+                      {formData.name || 'Tên tour...'}
                     </p>
                     <div className="flex items-center gap-xs text-on-surface-variant text-xs">
                       <span className="material-symbols-outlined text-[14px]">location_on</span>
@@ -529,7 +599,7 @@ export default function CreateTourPage() {
                     </div>
                     <div className="flex items-center justify-between pt-xs border-t border-outline-variant/20">
                       <span className="font-bold text-primary text-sm">
-                        {formData.priceAdult ? formData.priceAdult.toLocaleString('vi-VN') + 'đ' : '—'}
+                        {formData.priceAdult.toLocaleString('vi-VN')}đ
                       </span>
                       <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
                         formData.isActive
@@ -546,27 +616,27 @@ export default function CreateTourPage() {
               {/* Card: Hành động */}
               <div className="bg-white p-lg rounded-xl custom-shadow border border-outline-variant/30 space-y-sm">
                 <button
-                  form="create-tour-form"
+                  form="edit-tour-form"
                   type="submit"
-                  disabled={isSubmitting || submitSuccess}
+                  disabled={updateMutation.isPending || saveSuccess}
                   className={`w-full py-3 rounded-xl font-bold active:scale-95 transition-all text-white flex items-center justify-center gap-xs shadow-md ${
-                    submitSuccess ? 'bg-tertiary' : 'bg-primary hover:bg-primary/90'
+                    saveSuccess ? 'bg-tertiary' : 'bg-primary hover:bg-primary/90'
                   }`}
                 >
-                  {isSubmitting ? (
+                  {updateMutation.isPending ? (
                     <>
                       <span className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
-                      Đang tạo tour...
+                      Đang lưu...
                     </>
-                  ) : submitSuccess ? (
+                  ) : saveSuccess ? (
                     <>
                       <span className="material-symbols-outlined text-[18px]">check_circle</span>
-                      Đã xuất bản thành công!
+                      Đã lưu thành công!
                     </>
                   ) : (
                     <>
-                      <span className="material-symbols-outlined text-[18px]">add_circle</span>
-                      Xuất bản Tour
+                      <span className="material-symbols-outlined text-[18px]">save</span>
+                      Lưu thay đổi
                     </>
                   )}
                 </button>

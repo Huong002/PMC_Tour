@@ -2,6 +2,7 @@ using AutoMapper;
 using Core.DTOs.Request;
 using Core.DTOs.Response;
 using Core.Entities;
+using Core.Enums;
 using Core.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Shared;
@@ -24,6 +25,7 @@ public class TourService : ITourService
         var query = _unitOfWork.Tours.GetQueryable()
             .Include(t => t.TourType)
             .Include(t => t.Images)
+            .Include(t => t.Bookings)
             .AsQueryable();
 
         if (filter.TourTypeId.HasValue)
@@ -49,6 +51,12 @@ public class TourService : ITourService
             .ToListAsync();
 
         var data = _mapper.Map<List<TourResponse>>(items);
+        // Gán số lượng đã đăng ký (chỉ tính booking chưa hủy)
+        for (int i = 0; i < data.Count; i++)
+        {
+            data[i].RegisteredCount = items[i].Bookings
+                .Count(b => b.Status != BookingStatus.Cancelled && b.Status != BookingStatus.Refunded);
+        }
         return ApiResponse<PagedResult<TourResponse>>.Ok(
             new PagedResult<TourResponse>(data, total, filter.Page, filter.PageSize));
     }
@@ -60,12 +68,16 @@ public class TourService : ITourService
             .Include(t => t.Images)
             .Include(t => t.Itineraries.OrderBy(i => i.DayNumber))
             .Include(t => t.Reviews)
+            .Include(t => t.Bookings)
             .FirstOrDefaultAsync(t => t.Id == id);
 
         if (tour == null)
             return ApiResponse<TourResponse>.Fail("Tour not found", 404);
 
-        return ApiResponse<TourResponse>.Ok(_mapper.Map<TourResponse>(tour));
+        var response = _mapper.Map<TourResponse>(tour);
+        response.RegisteredCount = tour.Bookings
+            .Count(b => b.Status != BookingStatus.Cancelled && b.Status != BookingStatus.Refunded);
+        return ApiResponse<TourResponse>.Ok(response);
     }
 
     public async Task<ApiResponse<TourResponse>> GetBySlugAsync(string slug)
@@ -90,6 +102,16 @@ public class TourService : ITourService
         tour.CreatedAt = DateTime.UtcNow;
         tour.IsActive = true;
 
+        if (!string.IsNullOrEmpty(request.ImageUrl))
+        {
+            tour.Images.Add(new TourImage 
+            { 
+                ImageUrl = request.ImageUrl, 
+                SortOrder = 0,
+                CreatedAt = DateTime.UtcNow 
+            });
+        }
+
         await _unitOfWork.Tours.AddAsync(tour);
         await _unitOfWork.SaveChangesAsync();
 
@@ -99,13 +121,35 @@ public class TourService : ITourService
 
     public async Task<ApiResponse<TourResponse>> UpdateAsync(int id, UpdateTourRequest request, int userId)
     {
-        var tour = await _unitOfWork.Tours.GetByIdAsync(id);
+        var tour = await _unitOfWork.Tours.GetQueryable()
+            .Include(t => t.Images)
+            .FirstOrDefaultAsync(t => t.Id == id);
+
         if (tour == null)
             return ApiResponse<TourResponse>.Fail("Tour not found", 404);
 
         _mapper.Map(request, tour);
         tour.UpdatedBy = userId;
         tour.UpdatedAt = DateTime.UtcNow;
+
+        if (request.ImageUrl != null)
+        {
+            // Ảnh chính là ảnh có SortOrder = 0
+            var primaryImage = tour.Images.OrderBy(img => img.SortOrder).FirstOrDefault();
+            if (primaryImage != null)
+            {
+                primaryImage.ImageUrl = request.ImageUrl;
+            }
+            else
+            {
+                tour.Images.Add(new TourImage 
+                { 
+                    ImageUrl = request.ImageUrl, 
+                    SortOrder = 0,
+                    CreatedAt = DateTime.UtcNow 
+                });
+            }
+        }
 
         await _unitOfWork.Tours.UpdateAsync(tour);
         await _unitOfWork.SaveChangesAsync();
@@ -126,5 +170,22 @@ public class TourService : ITourService
         await _unitOfWork.SaveChangesAsync();
 
         return ApiResponse<bool>.Ok(true, "Tour deleted successfully");
+    }
+
+    public async Task<ApiResponse<TourResponse>> ToggleActiveAsync(int id, int userId)
+    {
+        var tour = await _unitOfWork.Tours.GetByIdAsync(id);
+        if (tour == null)
+            return ApiResponse<TourResponse>.Fail("Tour not found", 404);
+
+        tour.IsActive = !tour.IsActive;
+        tour.UpdatedBy = userId;
+        tour.UpdatedAt = DateTime.UtcNow;
+        await _unitOfWork.Tours.UpdateAsync(tour);
+        await _unitOfWork.SaveChangesAsync();
+
+        var result = await GetByIdAsync(tour.Id);
+        return ApiResponse<TourResponse>.Ok(result.Data!,
+            tour.IsActive ? "Tour đã được mở đăng ký" : "Tour đã đóng đăng ký");
     }
 }

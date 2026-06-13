@@ -51,11 +51,12 @@ builder.Services.AddSwaggerGen(c =>
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "PMC Tour API", Version = "v1" });
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
-        Description = "JWT Authorization header using the Bearer scheme. Example: \"Bearer {token}\"",
+        Description = "JWT Authorization header using the Bearer scheme. \r\n\r\n Nhập 'Bearer' [khoảng trắng] rồi đến token của bạn.\r\n\r\nVí dụ: \"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\"",
         Name = "Authorization",
         In = ParameterLocation.Header,
         Type = SecuritySchemeType.ApiKey,
-        Scheme = "Bearer"
+        Scheme = "Bearer",
+        BearerFormat = "JWT"
     });
     c.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
@@ -66,7 +67,10 @@ builder.Services.AddSwaggerGen(c =>
                 {
                     Type = ReferenceType.SecurityScheme,
                     Id = "Bearer"
-                }
+                },
+                Scheme = "oauth2",
+                Name = "Bearer",
+                In = ParameterLocation.Header
             },
             Array.Empty<string>()
         }
@@ -128,16 +132,17 @@ using (var scope = app.Services.CreateScope())
         "ALTER TABLE \"Customers\" ADD COLUMN IF NOT EXISTS \"UserId\" integer NULL");
     await db.Database.ExecuteSqlRawAsync(
         "CREATE INDEX IF NOT EXISTS IX_Customers_UserId ON \"Customers\" (\"UserId\")");
-    await db.Database.ExecuteSqlRawAsync(
-        "UPDATE \"Customers\" SET \"UserId\" = \"Id\" WHERE \"UserId\" IS NULL AND \"Id\" >= 3");
+    // NOTE: Không tự gán UserId = Id vì Customer.Id ≠ User.Id (sẽ vi phạm FK)
+    // UserId được set đúng khi user đăng ký qua API
 }
 
 // ===== Middleware Pipeline =====
-if (app.Environment.IsDevelopment())
+app.UseSwagger();
+app.UseSwaggerUI(c =>
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "PMC Tour API v1");
+    c.RoutePrefix = string.Empty; // Hiển thị Swagger trực tiếp tại URL gốc http://localhost:5189
+});
 
 app.UseCors("AllowAll");
 

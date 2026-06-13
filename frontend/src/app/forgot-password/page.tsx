@@ -49,15 +49,15 @@ export default function ForgotPasswordPage() {
               <div className="absolute top-0 left-0 w-full h-1 bg-primary"></div>
               {/* Header Section */}
               <div className="text-center mb-lg">
-                <h1 className="font-headline-md text-headline-md text-on-surface mb-sm">Forgot password?</h1>
+                <h1 className="font-headline-md text-headline-md text-on-surface mb-sm">Quên mật khẩu?</h1>
                 <p className="font-body-md text-on-surface-variant text-sm">
-                  No worries, it happens. Enter your email address and we'll send you a link to reset your password.
+                  Đừng lo, chuyện này thường xảy ra. Hãy nhập địa chỉ email của bạn và chúng tôi sẽ gửi liên kết để đặt lại mật khẩu.
                 </p>
               </div>
               {/* Form Section */}
               <form className="space-y-lg" id="recovery-form" onSubmit={handleSubmit}>
                 <div className="space-y-base">
-                  <label className="font-label-md text-label-md text-on-surface-variant block ml-1" htmlFor="email">Email address</label>
+                  <label className="font-label-md text-label-md text-on-surface-variant block ml-1" htmlFor="email">Địa chỉ Email</label>
                   <div className="relative">
                     <span className={`material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline transition-colors ${emailFocused ? 'text-primary' : ''}`}>
                       mail
@@ -66,7 +66,7 @@ export default function ForgotPasswordPage() {
                       className="w-full pl-12 pr-4 py-3 bg-surface-bright border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all font-body-md text-on-surface placeholder:text-outline/60 text-sm outline-none" 
                       id="email" 
                       name="email" 
-                      placeholder="name@company.com" 
+                      placeholder="ten@congty.com" 
                       required 
                       type="email"
                       value={email}
@@ -78,7 +78,7 @@ export default function ForgotPasswordPage() {
                 </div>
                 {/* CTA Button */}
                 <button className="w-full bg-primary text-on-primary py-3.5 px-lg rounded-lg font-bold hover:bg-primary-container transition-all active:scale-[0.98] flex items-center justify-center gap-sm shadow-sm" type="submit">
-                  <span>Send Reset Link</span>
+                  <span>Gửi liên kết khôi phục</span>
                   <span className="material-symbols-outlined text-[20px]">arrow_forward</span>
                 </button>
               </form>
@@ -86,7 +86,7 @@ export default function ForgotPasswordPage() {
               <div className="mt-xl text-center">
                 <a className="inline-flex items-center gap-xs font-label-md text-label-md text-primary font-semibold hover:text-secondary transition-colors group text-sm" href="/login">
                   <span className="material-symbols-outlined text-[18px] transition-transform group-hover:-translate-x-1">arrow_back</span>
-                  Back to Login
+                  Quay lại đăng nhập
                 </a>
               </div>
             </div>
@@ -100,19 +100,19 @@ export default function ForgotPasswordPage() {
                   check_circle
                 </span>
               </div>
-              <h2 className="font-headline-md text-headline-md text-on-surface mb-sm">Check your email</h2>
+              <h2 className="font-headline-md text-headline-md text-on-surface mb-sm">Kiểm tra email của bạn</h2>
               <p className="font-body-md text-on-surface-variant mb-xl text-sm">
-                We've sent a password reset link to <span className="font-bold text-on-surface">{email}</span>.
+                Chúng tôi đã gửi liên kết đặt lại mật khẩu đến <span className="font-bold text-on-surface">{email}</span>.
               </p>
               <button 
                 className="w-full bg-surface-container-high hover:bg-surface-variant text-on-surface-variant py-3 px-lg rounded-lg font-bold transition-all text-sm active:scale-[0.98]" 
                 onClick={handleResend}
               >
-                Didn't receive the email? Resend
+                Không nhận được email? Gửi lại
               </button>
               <div className="mt-lg">
                 <a className="font-label-md text-label-md text-primary font-semibold hover:text-secondary transition-colors text-sm" href="/login">
-                  Return to Login
+                  Quay lại đăng nhập
                 </a>
               </div>
             </div>
@@ -120,7 +120,7 @@ export default function ForgotPasswordPage() {
 
           {/* Footer Note */}
           <p className="mt-xl text-center font-label-sm text-label-sm text-outline px-lg text-xs">
-            © 2024 VietTour. Professional, Inviting, and Dynamic travel experiences.
+            © 2024 VietTour. Trải nghiệm du lịch Chuyên nghiệp, Lôi cuốn và Năng động.
           </p>
         </div>
       </main>

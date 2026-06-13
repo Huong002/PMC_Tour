@@ -14,6 +14,7 @@ public class TourResponse
     public decimal PriceChild { get; set; }
     public decimal PriceInfant { get; set; }
     public int MaxPeople { get; set; }
+    public int RegisteredCount { get; set; }
     public decimal? SalePrice { get; set; }
     public bool IsActive { get; set; }
     public bool IsFeatured { get; set; }

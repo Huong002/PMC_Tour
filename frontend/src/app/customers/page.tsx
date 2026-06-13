@@ -122,7 +122,7 @@ export default function CustomersPage() {
                         <td className="px-6 py-4 text-on-surface-variant">{u.email}</td>
                         <td className="px-6 py-4 font-semibold text-label-sm">
                           <span className={`px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider border ${getRoleBadge(u.role)}`}>
-                            {u.role || 'USER'}
+                            {u.role?.toUpperCase() === 'ADMIN' ? 'Quản trị viên' : u.role?.toUpperCase() === 'STAFF' ? 'Nhân viên' : 'Khách hàng'}
                           </span>
                         </td>
                         <td className="px-6 py-4">

@@ -47,10 +47,10 @@ export default function Home() {
               className="text-5xl md:text-[48px] leading-[56px] font-bold text-white mb-6 drop-shadow-lg"
               style={{ fontFamily: "'Montserrat', sans-serif", letterSpacing: '-0.02em' }}
             >
-              Discover Vietnam&#39;s Hidden Gems
+              Khám Phá Những Viên Ngọc Ẩn Của Việt Nam
             </h1>
             <p className="text-lg text-white/90 mb-10 drop-shadow-md">
-              Professional, inviting, and dynamic travel experiences tailored for you.
+              Trải nghiệm du lịch chuyên nghiệp, lôi cuốn và năng động dành riêng cho bạn.
             </p>
 
             {/* Search Bar */}
@@ -69,7 +69,7 @@ export default function Home() {
                   className="block text-xs font-semibold mb-1 ml-1"
                   style={{ color: 'var(--color-on-surface-variant)' }}
                 >
-                  Location
+                  Điểm đến
                 </label>
                 <div className="relative">
                   <span
@@ -81,7 +81,7 @@ export default function Home() {
                   <input
                     className="w-full pl-10 pr-4 py-3 rounded-lg border text-sm bg-white outline-none transition-all"
                     style={{ borderColor: 'var(--color-outline-variant)', color: 'var(--color-on-surface)' }}
-                    placeholder="Where to go?"
+                    placeholder="Bạn muốn đi đâu?"
                     type="text"
                     onFocus={(e) => { e.target.style.borderColor = 'var(--color-primary)'; }}
                     onBlur={(e) => { e.target.style.borderColor = 'var(--color-outline-variant)'; }}
@@ -95,7 +95,7 @@ export default function Home() {
                   className="block text-xs font-semibold mb-1 ml-1"
                   style={{ color: 'var(--color-on-surface-variant)' }}
                 >
-                  Date
+                  Ngày khởi hành
                 </label>
                 <div className="relative">
                   <span
@@ -107,7 +107,7 @@ export default function Home() {
                   <input
                     className="w-full pl-10 pr-4 py-3 rounded-lg border text-sm bg-white outline-none transition-all"
                     style={{ borderColor: 'var(--color-outline-variant)', color: 'var(--color-on-surface)' }}
-                    placeholder="Select dates"
+                    placeholder="Chọn ngày"
                     type="text"
                     onFocus={(e) => { e.target.style.borderColor = 'var(--color-primary)'; }}
                     onBlur={(e) => { e.target.style.borderColor = 'var(--color-outline-variant)'; }}
@@ -121,7 +121,7 @@ export default function Home() {
                   className="block text-xs font-semibold mb-1 ml-1"
                   style={{ color: 'var(--color-on-surface-variant)' }}
                 >
-                  Budget
+                  Mức giá
                 </label>
                 <div className="relative">
                   <span
@@ -136,9 +136,9 @@ export default function Home() {
                     onFocus={(e) => { e.target.style.borderColor = 'var(--color-primary)'; }}
                     onBlur={(e) => { e.target.style.borderColor = 'var(--color-outline-variant)'; }}
                   >
-                    <option>Economy</option>
-                    <option>Premium</option>
-                    <option>Luxury</option>
+                    <option>Bình dân</option>
+                    <option>Cận cao cấp</option>
+                    <option>Cao cấp</option>
                   </select>
                 </div>
               </div>
@@ -153,7 +153,7 @@ export default function Home() {
                 }}
               >
                 <span className="material-symbols-outlined">search</span>
-                Search
+                Tìm kiếm
               </Link>
             </div>
           </div>
@@ -167,10 +167,10 @@ export default function Home() {
                 className="text-3xl font-bold mb-2"
                 style={{ color: 'var(--color-primary)', fontFamily: "'Montserrat', sans-serif" }}
               >
-                Featured Tours
+                Tour Nổi Bật
               </h2>
               <p className="text-base" style={{ color: 'var(--color-on-surface-variant)' }}>
-                Handpicked experiences across the country&#39;s most iconic sites.
+                Những trải nghiệm được tuyển chọn kỹ lưỡng tại những địa danh mang tính biểu tượng nhất đất nước.
               </p>
             </div>
             <Link
@@ -178,7 +178,7 @@ export default function Home() {
               className="hidden md:flex items-center gap-1 font-bold hover:underline"
               style={{ color: 'var(--color-primary)' }}
             >
-              View all tours
+              Xem tất cả các tour
               <span className="material-symbols-outlined">arrow_forward</span>
             </Link>
           </div>
@@ -203,44 +203,44 @@ export default function Home() {
               <div className="relative h-64 overflow-hidden">
                 <img
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  alt="Ha Long Bay Luxury Cruise"
+                  alt="Du thuyền Hạ Long Cao cấp"
                   src="https://lh3.googleusercontent.com/aida-public/AB6AXuB2kMf1N3_Rz7UCmKFDXXOH1Ebqo3_y3ap0Aw2RTfL0rsdGqmnN3k2PN8OMXKhGRoc_m0Rjeyfk_eI4NvAgvU3p0qkj-UJ5gsibYJVHEZnGCh50VnQT8I1NbrwmnrDTp-6H-8h_ccm7KbaexOpYqWI_4UlYOQkIWzfyqZCRBONyEXDlxneuwGZ3ZaVQDPACTdiLinLzR2Cdq0MEgCnjqSFC6zmK7GCIVoY7ioQne96tH2rxabaxcodyyo0uGTYABuIuj4Z_ldeNnCQ"
                 />
                 <div
                   className="absolute top-4 left-4 px-3 py-1 rounded-full text-xs font-bold"
                   style={{ background: 'rgba(0,99,97,0.9)', color: 'var(--color-on-tertiary-container)' }}
                 >
-                  5 Days
+                  5 Ngày
                 </div>
               </div>
               <div className="p-4">
                 <div className="flex items-center gap-1 font-bold mb-2" style={{ color: 'var(--color-secondary)' }}>
                   <span className="material-symbols-outlined text-[18px]" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
-                  <span className="text-sm">4.9 (120 reviews)</span>
+                  <span className="text-sm">4.9 (120 đánh giá)</span>
                 </div>
                 <h3
                   className="text-2xl font-semibold mb-2"
                   style={{ color: 'var(--color-on-surface)', fontFamily: "'Montserrat', sans-serif" }}
                 >
-                  Ha Long Bay Luxury Cruise
+                  Du thuyền Sang trọng Vịnh Hạ Long
                 </h3>
                 <p className="text-sm line-clamp-2 mb-4" style={{ color: 'var(--color-on-surface-variant)' }}>
-                  Explore the emerald waters and limestone islands of Ha Long Bay aboard our five-star cruise.
+                  Khám phá làn nước ngọc lục bảo và các đảo đá vôi của Vịnh Hạ Long trên du thuyền năm sao của chúng tôi.
                 </p>
                 <div
                   className="flex justify-between items-center pt-4 border-t"
                   style={{ borderColor: 'var(--color-outline-variant)' }}
                 >
                   <div>
-                    <span className="text-xs block" style={{ color: 'var(--color-outline)' }}>From</span>
-                    <span className="font-bold text-2xl" style={{ color: 'var(--color-primary)' }}>$499</span>
+                    <span className="text-xs block" style={{ color: 'var(--color-outline)' }}>Từ</span>
+                    <span className="font-bold text-2xl" style={{ color: 'var(--color-primary)' }}>12.500.000đ</span>
                   </div>
                   <Link
                     href="/tours/1"
                     className="px-4 py-2 rounded-lg font-bold text-white transition-colors hover:opacity-90"
                     style={{ background: 'var(--color-primary)' }}
                   >
-                    Book Now
+                    Đặt Ngay
                   </Link>
                 </div>
               </div>
@@ -265,44 +265,44 @@ export default function Home() {
               <div className="relative h-64 overflow-hidden">
                 <img
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  alt="Da Nang Coastal Escape"
+                  alt="Khám phá biển Đà Nẵng"
                   src="https://lh3.googleusercontent.com/aida-public/AB6AXuD0-xI_5NNTewujqvo97PfB2MaNvVOOXXW1hcSaDHKMs4asSx1FOq4BxJ-u1wdMYspozCf6a1rkpZaRXX-A4v-bVhBqaC85MlHS9XStk4QKCv2j2jGRH1NOTKQftpfNXaNZrdyrzWrwvbQrzvMvlM1N_F-Fw5xgH5uytrLqx6cTFLfvh_aOl0532mFPYnUDc_T0pQXmp2lwv9CLreHZrRAXgYRqRHuXVBwpAdvSJ1nTZ5xyJBoEUuODCw1v3Gg9ouykMJIs4E17B-Q"
                 />
                 <div
                   className="absolute top-4 left-4 px-3 py-1 rounded-full text-xs font-bold"
                   style={{ background: 'rgba(0,99,97,0.9)', color: 'var(--color-on-tertiary-container)' }}
                 >
-                  3 Days
+                  3 Ngày
                 </div>
               </div>
               <div className="p-4">
                 <div className="flex items-center gap-1 font-bold mb-2" style={{ color: 'var(--color-secondary)' }}>
                   <span className="material-symbols-outlined text-[18px]" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
-                  <span className="text-sm">4.8 (85 reviews)</span>
+                  <span className="text-sm">4.8 (85 đánh giá)</span>
                 </div>
                 <h3
                   className="text-2xl font-semibold mb-2"
                   style={{ color: 'var(--color-on-surface)', fontFamily: "'Montserrat', sans-serif" }}
                 >
-                  Da Nang Coastal Escape
+                  Hành trình Khám phá Biển Đà Nẵng
                 </h3>
                 <p className="text-sm line-clamp-2 mb-4" style={{ color: 'var(--color-on-surface-variant)' }}>
-                  Visit the Golden Bridge and relax on the pristine beaches of central Vietnam&#39;s coast.
+                  Ghé thăm Cầu Vàng và thư giãn trên những bãi biển hoang sơ của vùng duyên hải miền Trung Việt Nam.
                 </p>
                 <div
                   className="flex justify-between items-center pt-4 border-t"
                   style={{ borderColor: 'var(--color-outline-variant)' }}
                 >
                   <div>
-                    <span className="text-xs block" style={{ color: 'var(--color-outline)' }}>From</span>
-                    <span className="font-bold text-2xl" style={{ color: 'var(--color-primary)' }}>$299</span>
+                    <span className="text-xs block" style={{ color: 'var(--color-outline)' }}>Từ</span>
+                    <span className="font-bold text-2xl" style={{ color: 'var(--color-primary)' }}>6.800.000đ</span>
                   </div>
                   <Link
                     href="/tours/2"
                     className="px-4 py-2 rounded-lg font-bold text-white transition-colors hover:opacity-90"
                     style={{ background: 'var(--color-primary)' }}
                   >
-                    Book Now
+                    Đặt Ngay
                   </Link>
                 </div>
               </div>
@@ -327,44 +327,44 @@ export default function Home() {
               <div className="relative h-64 overflow-hidden">
                 <img
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  alt="Sapa Highlands Trekking"
+                  alt="Trekking vùng cao Sa Pa"
                   src="https://lh3.googleusercontent.com/aida-public/AB6AXuCZX6EEXXoSz07_jUo7zLg-TXJ5nfRVbgoO8r_jw8qOoLT_6ylUePyUDUMRX-97DPUX8SeZ7vA_KBibZfMkj_t47T81wMuFbX_gPoQ-7YT5OlxK2a4mHH_006vAbahGHvh2T_trOByovh3EenGXzZHkgC6356-6x3esfScMDP1N6BF2-4vbnWzBGi9U5nhyPeapvXspe0iwnz3nprsyt57JURn7KmDWkyZrp63gfk0ozUR0Qzyzs8mccLIpPx2WwDPChkklO5RDb4w"
                 />
                 <div
                   className="absolute top-4 left-4 px-3 py-1 rounded-full text-xs font-bold"
                   style={{ background: 'rgba(0,99,97,0.9)', color: 'var(--color-on-tertiary-container)' }}
                 >
-                  4 Days
+                  4 Ngày
                 </div>
               </div>
               <div className="p-4">
                 <div className="flex items-center gap-1 font-bold mb-2" style={{ color: 'var(--color-secondary)' }}>
                   <span className="material-symbols-outlined text-[18px]" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
-                  <span className="text-sm">4.9 (92 reviews)</span>
+                  <span className="text-sm">4.9 (92 đánh giá)</span>
                 </div>
                 <h3
                   className="text-2xl font-semibold mb-2"
                   style={{ color: 'var(--color-on-surface)', fontFamily: "'Montserrat', sans-serif" }}
                 >
-                  Sapa Highlands Trekking
+                  Trekking Vùng Cao Sa Pa
                 </h3>
                 <p className="text-sm line-clamp-2 mb-4" style={{ color: 'var(--color-on-surface-variant)' }}>
-                  A journey through the terraced rice fields and ethnic villages of northern Vietnam.
+                  Hành trình qua những ruộng bậc thang và các bản làng dân tộc của vùng núi phía bắc Việt Nam.
                 </p>
                 <div
                   className="flex justify-between items-center pt-4 border-t"
                   style={{ borderColor: 'var(--color-outline-variant)' }}
                 >
                   <div>
-                    <span className="text-xs block" style={{ color: 'var(--color-outline)' }}>From</span>
-                    <span className="font-bold text-2xl" style={{ color: 'var(--color-primary)' }}>$349</span>
+                    <span className="text-xs block" style={{ color: 'var(--color-outline)' }}>Từ</span>
+                    <span className="font-bold text-2xl" style={{ color: 'var(--color-primary)' }}>8.200.000đ</span>
                   </div>
                   <Link
                     href="/tours/3"
                     className="px-4 py-2 rounded-lg font-bold text-white transition-colors hover:opacity-90"
                     style={{ background: 'var(--color-primary)' }}
                   >
-                    Book Now
+                    Đặt Ngay
                   </Link>
                 </div>
               </div>
@@ -379,14 +379,14 @@ export default function Home() {
               className="text-3xl font-bold text-center mb-10"
               style={{ color: 'var(--color-primary)', fontFamily: "'Montserrat', sans-serif" }}
             >
-              Why Choose VietTour
+              Tại Sao Chọn VietTour
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6 text-center">
               {[
-                { icon: 'verified',       title: 'Certified Guides',   desc: 'Expert locals who know the history and hidden spots.' },
-                { icon: 'support_agent',  title: '24/7 Support',       desc: 'We are here to assist you at every step of your journey.' },
-                { icon: 'shield_with_heart', title: 'Travel Insurance', desc: 'Fully covered trips for your peace of mind and safety.' },
-                { icon: 'handshake',      title: 'Best Price',         desc: 'Competitive pricing with no hidden fees, guaranteed.' },
+                { icon: 'verified',       title: 'Hướng dẫn viên chuyên nghiệp',   desc: 'Các chuyên gia địa phương am hiểu lịch sử và các địa điểm ẩn.' },
+                { icon: 'support_agent',  title: 'Hỗ trợ 24/7',       desc: 'Chúng tôi luôn ở đây để hỗ trợ bạn trên mọi bước đường hành trình.' },
+                { icon: 'shield_with_heart', title: 'Bảo hiểm du lịch', desc: 'Các chuyến đi được bảo hiểm đầy đủ cho sự an tâm và an toàn của bạn.' },
+                { icon: 'handshake',      title: 'Giá tốt nhất',         desc: 'Cam kết mức giá cạnh tranh nhất và không có phí ẩn.' },
               ].map((item) => (
                 <div key={item.title} className="flex flex-col items-center">
                   <div
@@ -430,10 +430,10 @@ export default function Home() {
                 className="text-3xl font-bold mb-4"
                 style={{ color: 'var(--color-primary)', fontFamily: "'Montserrat', sans-serif" }}
               >
-                Get Exclusive Travel Tips
+                Nhận Mẹo Du Lịch Độc Quyền
               </h2>
               <p className="mb-6 text-base" style={{ color: 'var(--color-on-surface-variant)' }}>
-                Join 50,000+ travelers and get the best deals on Vietnamese tours directly in your inbox.
+                Tham gia cùng hơn 50.000 du khách để nhận những ưu đãi tốt nhất về các tour Việt Nam trực tiếp trong hộp thư của bạn.
               </p>
               <form
                 className="flex flex-col sm:flex-row gap-4 max-w-lg mx-auto"
@@ -442,7 +442,7 @@ export default function Home() {
                 <input
                   className="flex-1 px-6 py-3 rounded-lg border text-sm outline-none transition-all bg-white"
                   style={{ borderColor: 'var(--color-outline-variant)', color: 'var(--color-on-surface)' }}
-                  placeholder="Your email address"
+                  placeholder="Địa chỉ email của bạn"
                   required
                   type="email"
                   onFocus={(e) => { e.target.style.borderColor = 'var(--color-primary)'; }}
@@ -453,11 +453,11 @@ export default function Home() {
                   style={{ background: 'var(--color-primary)' }}
                   type="submit"
                 >
-                  Subscribe Now
+                  Đăng Ký Ngay
                 </button>
               </form>
               <p className="text-xs mt-4" style={{ color: 'var(--color-outline)' }}>
-                By subscribing, you agree to our Terms of Service and Privacy Policy.
+                Bằng cách đăng ký, bạn đồng ý với Điều khoản Dịch vụ và Chính sách Bảo mật của chúng tôi.
               </p>
             </div>
           </div>
@@ -476,7 +476,7 @@ export default function Home() {
               VietTour
             </span>
             <p className="text-sm" style={{ color: '#c0c8cd' }}>
-              © 2024 VietTour. All rights reserved. Professional, Inviting, and Dynamic travel experiences.
+              © 2024 VietTour. Bảo lưu mọi quyền. Trải nghiệm du lịch Chuyên nghiệp, Lôi cuốn và Năng động.
             </p>
             <div className="flex gap-4">
               {[
@@ -502,10 +502,10 @@ export default function Home() {
               className="text-xs font-bold uppercase tracking-wider"
               style={{ color: '#f9f9f9' }}
             >
-              Company
+              Công ty
             </h5>
             <ul className="space-y-2">
-              {['About Us', 'Careers', 'Press'].map((item) => (
+              {['Về chúng tôi', 'Tuyển dụng', 'Báo chí'].map((item) => (
                 <li key={item}>
                   <Link
                     href="/about"
@@ -525,14 +525,14 @@ export default function Home() {
               className="text-xs font-bold uppercase tracking-wider"
               style={{ color: '#f9f9f9' }}
             >
-              Support
+              Hỗ trợ
             </h5>
             <ul className="space-y-2">
               {[
-                { label: 'Help Center',     href: '/contact' },
-                { label: 'Contact',         href: '/contact' },
-                { label: 'Privacy Policy',  href: '/tours'   },
-                { label: 'Terms of Service',href: '/tours'   },
+                { label: 'Trung tâm trợ giúp',     href: '/contact' },
+                { label: 'Liên hệ',         href: '/contact' },
+                { label: 'Chính sách bảo mật',  href: '/tours'   },
+                { label: 'Điều khoản dịch vụ', href: '/tours'   },
               ].map((item) => (
                 <li key={item.label}>
                   <Link
@@ -553,13 +553,13 @@ export default function Home() {
               className="text-xs font-bold uppercase tracking-wider"
               style={{ color: '#f9f9f9' }}
             >
-              Contact Us
+              Liên hệ chúng tôi
             </h5>
             <div className="space-y-2">
               {[
                 { icon: 'mail',        text: 'info@viettour.vn' },
                 { icon: 'call',        text: '+84 123 456 789'  },
-                { icon: 'location_on', text: '123 Travel St, Hanoi, Vietnam' },
+                { icon: 'location_on', text: '123 Đường Du Lịch, Hà Nội, Việt Nam' },
               ].map((item) => (
                 <div key={item.icon} className="flex items-start gap-2" style={{ color: '#c0c8cd' }}>
                   <span className="material-symbols-outlined text-sm mt-1">{item.icon}</span>

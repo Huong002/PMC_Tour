@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation';
 import { useAuth } from '../../hooks/useAuth';
 
 const NAV_LINKS = [
-  { href: '/tours',           label: 'Tours' },
+  { href: '/tours',           label: 'Tour du lịch' },
   { href: '/tours',           label: 'Điểm đến',          key: 'destinations' },
   { href: '/registrations/my', label: 'Đặt tour của tôi' },
   { href: '/about',           label: 'Về chúng tôi' },
@@ -66,7 +66,7 @@ export function Navbar() {
           {/* Desktop Nav */}
           <div className="hidden md:flex items-center gap-0.5">
             {NAV_LINKS.map((link) => {
-              const active = isActive(link.href) && link.label === 'Tours' && pathname === '/tours';
+              const active = isActive(link.href) && link.label === 'Tour du lịch' && pathname === '/tours';
               return (
                 <Link
                   key={link.key ?? link.label}
@@ -89,7 +89,7 @@ export function Navbar() {
         <div className="hidden md:flex items-center gap-3">
           {user ? (
             <>
-              <div className="flex items-center gap-2">
+              <Link href="/profile" className="flex items-center gap-2 hover:opacity-85 transition-opacity">
                 <div className="w-9 h-9 rounded-full overflow-hidden border-2 border-primary/20">
                   <img
                     alt={user.fullName || 'User'}
@@ -103,7 +103,7 @@ export function Navbar() {
                 >
                   {user.fullName}
                 </span>
-              </div>
+              </Link>
               <button
                 onClick={() => logout()}
                 className="px-4 py-2 rounded-xl text-sm font-semibold text-error border border-error/30 hover:bg-error/5 transition-all"
@@ -169,12 +169,20 @@ export function Navbar() {
             ))}
             <div className="border-t border-outline-variant/40 mt-2 pt-3 flex flex-col gap-2">
               {user ? (
-                <button
-                  onClick={() => logout()}
-                  className="px-4 py-3 rounded-xl text-sm font-semibold text-error hover:bg-error/5 transition-colors text-left"
-                >
-                  Đăng xuất
-                </button>
+                <>
+                  <Link
+                    href="/profile"
+                    className="px-4 py-3 rounded-xl text-sm font-semibold text-on-surface-variant hover:text-primary hover:bg-primary/5 transition-colors text-left"
+                  >
+                    Trang cá nhân
+                  </Link>
+                  <button
+                    onClick={() => logout()}
+                    className="px-4 py-3 rounded-xl text-sm font-semibold text-error hover:bg-error/5 transition-colors text-left"
+                  >
+                    Đăng xuất
+                  </button>
+                </>
               ) : (
                 <>
                   <Link

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { AuthGuard } from '../../components/layout/AuthGuard';
 import { Sidebar } from '../../components/layout/Sidebar';
@@ -15,12 +16,12 @@ interface DisplayRegistration extends RegistrationDto {
 }
 
 const MOCK_REGISTRATIONS: DisplayRegistration[] = [
-  { id: 101, tourId: 1, tourTitle: 'Ha Long Bay Luxury Cruise', userId: 3, userName: 'An Nguyen', email: 'an.nguyen@gmail.com', registeredAt: '2026-06-05T09:00:00Z', status: 'Approved', depositAmount: 200, totalAmount: 599 },
-  { id: 102, tourId: 2, tourTitle: 'Sapa Highland Trekking', userId: 4, userName: 'Binh Tran', email: 'binh.tran@gmail.com', registeredAt: '2026-06-08T10:15:00Z', status: 'Pending', depositAmount: 0, totalAmount: 345 },
-  { id: 103, tourId: 5, tourTitle: 'Da Lat Tea Hills Discovery', userId: 5, userName: 'Minh Le', email: 'minh.le@gmail.com', registeredAt: '2026-05-12T14:30:00Z', status: 'Completed', depositAmount: 210, totalAmount: 210 },
-  { id: 104, tourId: 3, tourTitle: 'Hoi An Lantern Festival Night', userId: 6, userName: 'Vu Pham', email: 'vu.pham@gmail.com', registeredAt: '2026-04-10T11:00:00Z', status: 'Cancelled', depositAmount: 0, totalAmount: 120 },
-  { id: 105, tourId: 4, tourTitle: 'Saigon Historic City Tour', userId: 7, userName: 'Anh Hoang', email: 'anh.hoang@gmail.com', registeredAt: '2026-06-09T08:30:00Z', status: 'Pending', depositAmount: 0, totalAmount: 75 },
-  { id: 106, tourId: 2, tourTitle: 'Da Nang Coastal Escape', userId: 8, userName: 'Thu Tran', email: 'thu.tran@gmail.com', registeredAt: '2026-06-03T16:00:00Z', status: 'Confirmed', depositAmount: 100, totalAmount: 299 }
+  { id: 101, tourId: 1, tourTitle: 'Du Thuyền Cao Cấp Vịnh Hạ Long', userId: 3, userName: 'Nguyễn Văn An', email: 'an.nguyen@gmail.com', registeredAt: '2026-06-05T09:00:00Z', status: 'Approved', depositAmount: 5000000, totalAmount: 12500000 },
+  { id: 102, tourId: 3, tourTitle: 'Trekking Sapa - Ruộng Bậc Thang', userId: 4, userName: 'Trần Văn Bình', email: 'binh.tran@gmail.com', registeredAt: '2026-06-08T10:15:00Z', status: 'Pending', depositAmount: 0, totalAmount: 8200000 },
+  { id: 103, tourId: 5, tourTitle: 'Đà Lạt - Đồi Chè & Thông Reo', userId: 5, userName: 'Lê Văn Minh', email: 'minh.le@gmail.com', registeredAt: '2026-05-12T14:30:00Z', status: 'Completed', depositAmount: 4800000, totalAmount: 4800000 },
+  { id: 104, tourId: 7, tourTitle: 'Phố Cổ Hội An - Di Sản Văn Hóa', userId: 6, userName: 'Phạm Văn Vũ', email: 'vu.pham@gmail.com', registeredAt: '2026-04-10T11:00:00Z', status: 'Cancelled', depositAmount: 0, totalAmount: 6900000 },
+  { id: 105, tourId: 4, tourTitle: 'Sài Gòn Xưa & Nay', userId: 7, userName: 'Hoàng Thị Ánh', email: 'anh.hoang@gmail.com', registeredAt: '2026-06-09T08:30:00Z', status: 'Pending', depositAmount: 0, totalAmount: 1800000 },
+  { id: 106, tourId: 2, tourTitle: 'Biển Xanh Đà Nẵng', userId: 8, userName: 'Trần Thị Thu', email: 'thu.tran@gmail.com', registeredAt: '2026-06-03T16:00:00Z', status: 'Confirmed', depositAmount: 2000000, totalAmount: 6800000 }
 ];
 
 export default function RegistrationsPage() {
@@ -135,6 +136,20 @@ export default function RegistrationsPage() {
     }
   };
 
+  const getStatusLabel = (status: string) => {
+    switch (status.toUpperCase()) {
+      case 'PENDING': return 'Chờ duyệt';
+      case 'APPROVED': return 'Đã duyệt';
+      case 'CONFIRMED': return 'Đã xác nhận';
+      case 'COMPLETED': return 'Hoàn thành';
+      case 'CANCELLED': return 'Đã hủy';
+      case 'REJECTED': return 'Từ chối';
+      case 'NO SHOW':
+      case 'NO_SHOW': return 'Vắng mặt';
+      default: return status;
+    }
+  };
+
   return (
     <AuthGuard allowedRoles={['STAFF', 'ADMIN']}>
       <div className="bg-surface text-on-surface font-body-md min-h-screen flex">
@@ -145,11 +160,11 @@ export default function RegistrationsPage() {
         <main className="flex-1 ml-64 p-margin-desktop bg-surface min-h-screen">
           {/* Header Section */}
           <AdminHeader
-            title="Registration Management"
-            description="Approve, reject or monitor guest bookings and payment states."
+            title="Quản Lý Đăng Ký Tour"
+            description="Duyệt, từ chối hoặc theo dõi việc đặt tour và trạng thái thanh toán của khách."
             searchTerm={searchTerm}
             onSearchChange={setSearchTerm}
-            searchPlaceholder="Search by name, tour, ID..."
+            searchPlaceholder="Tìm kiếm theo tên, tour, ID..."
           />
 
           {/* Table Container */}
@@ -158,12 +173,12 @@ export default function RegistrationsPage() {
               <table className="w-full text-left border-collapse">
                 <thead className="bg-surface-container-low border-b border-outline-variant/50">
                   <tr>
-                    <th className="px-6 py-4 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Reg ID</th>
-                    <th className="px-6 py-4 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Customer</th>
-                    <th className="px-6 py-4 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Tour Excursion</th>
-                    <th className="px-6 py-4 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Reg Date</th>
-                    <th className="px-6 py-4 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Status</th>
-                    <th className="px-6 py-4 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider text-right">Actions</th>
+                    <th className="px-6 py-4 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Mã Đăng Ký</th>
+                    <th className="px-6 py-4 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Khách Hàng</th>
+                    <th className="px-6 py-4 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Tour Du Lịch</th>
+                    <th className="px-6 py-4 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Ngày Đăng Ký</th>
+                    <th className="px-6 py-4 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Trạng Thái</th>
+                    <th className="px-6 py-4 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider text-right">Hành Động</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-outline-variant/20">
@@ -172,35 +187,45 @@ export default function RegistrationsPage() {
                       const status = reg.status.toUpperCase();
                       return (
                         <tr key={reg.id} className="hover:bg-surface-container-lowest transition-all hover:translate-x-1 duration-200">
-                          <td className="px-6 py-4 font-mono text-label-md font-bold text-on-surface-variant">REG-{reg.id}</td>
+                          <td className="px-6 py-4 font-mono text-label-md font-bold text-primary">
+                            <Link href={`/registrations/${reg.id}`} className="hover:underline">
+                              REG-{reg.id}
+                            </Link>
+                          </td>
                           <td className="px-6 py-4 text-left">
                             <span className="font-label-md text-label-md font-bold text-on-surface block">{reg.userName}</span>
                             <span className="text-[11px] text-on-surface-variant">{reg.email || 'customer@viettour.com'}</span>
                           </td>
                           <td className="px-6 py-4 text-sm text-primary font-bold">{reg.tourTitle}</td>
                           <td className="px-6 py-4 text-sm text-on-surface-variant font-medium">
-                            {new Date(reg.registeredAt).toLocaleDateString()}
+                            {new Date(reg.registeredAt).toLocaleDateString('vi-VN')}
                           </td>
                           <td className="px-6 py-4">
                             <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${getStatusBadgeClass(reg.status)}`}>
-                              {reg.status}
+                              {getStatusLabel(reg.status)}
                             </span>
                           </td>
                           <td className="px-6 py-4 text-right">
-                            <div className="flex justify-end gap-2">
+                            <div className="flex justify-end items-center gap-2">
+                              <Link
+                                href={`/registrations/${reg.id}`}
+                                className="border border-outline-variant/65 text-on-surface-variant hover:bg-surface-variant/20 font-bold text-[11px] px-3 py-1.5 rounded-lg active:scale-95 transition-all shadow-sm"
+                              >
+                                Chi Tiết
+                              </Link>
                               {status === 'PENDING' && (
                                 <>
                                   <button
                                     onClick={() => handleAction(reg.id, 'approve')}
                                     className="bg-primary hover:bg-primary-container text-white font-bold text-[11px] px-3 py-1.5 rounded-lg active:scale-95 transition-all shadow-sm"
                                   >
-                                    Approve
+                                    Duyệt
                                   </button>
                                   <button
                                     onClick={() => handleAction(reg.id, 'reject')}
                                     className="border border-outline-variant/65 text-on-surface-variant hover:text-white hover:bg-error font-bold text-[11px] px-3 py-1.5 rounded-lg active:scale-95 transition-all"
                                   >
-                                    Reject
+                                    Từ chối
                                   </button>
                                 </>
                               )}
@@ -210,13 +235,13 @@ export default function RegistrationsPage() {
                                     onClick={() => handleAction(reg.id, 'confirm')}
                                     className="bg-secondary hover:bg-secondary/90 text-white font-bold text-[11px] px-3 py-1.5 rounded-lg active:scale-95 transition-all shadow-sm"
                                   >
-                                    Confirm Deposit
+                                    Xác nhận cọc
                                   </button>
                                   <button
                                     onClick={() => handleAction(reg.id, 'cancel')}
                                     className="border border-outline-variant/65 text-on-surface-variant hover:bg-error/5 hover:text-error font-bold text-[11px] px-3 py-1.5 rounded-lg active:scale-95 transition-all"
                                   >
-                                    Cancel
+                                    Hủy
                                   </button>
                                 </>
                               )}
@@ -226,18 +251,18 @@ export default function RegistrationsPage() {
                                     onClick={() => handleAction(reg.id, 'complete')}
                                     className="bg-tertiary hover:bg-tertiary/95 text-white font-bold text-[11px] px-3 py-1.5 rounded-lg active:scale-95 transition-all shadow-sm"
                                   >
-                                    Mark Complete
+                                    Hoàn thành
                                   </button>
                                   <button
                                     onClick={() => handleAction(reg.id, 'noShow')}
                                     className="border border-outline-variant/65 text-on-surface-variant hover:bg-error/5 hover:text-error font-bold text-[11px] px-3 py-1.5 rounded-lg active:scale-95 transition-all"
                                   >
-                                    No Show
+                                    Vắng mặt
                                   </button>
                                 </>
                               )}
                               {(status === 'COMPLETED' || status === 'CANCELLED' || status === 'REJECTED' || status === 'NO SHOW' || status === 'NO_SHOW') && (
-                                <span className="text-xs text-on-surface-variant italic font-semibold px-2">Archived Records</span>
+                                <span className="text-xs text-on-surface-variant italic font-semibold px-2">Hồ sơ đã lưu</span>
                               )}
                             </div>
                           </td>
@@ -247,7 +272,7 @@ export default function RegistrationsPage() {
                   ) : (
                     <tr>
                       <td colSpan={6} className="px-6 py-4 text-center text-on-surface-variant">
-                        No registration requests found matching filters.
+                        Không tìm thấy yêu cầu đăng ký nào phù hợp với bộ lọc.
                       </td>
                     </tr>
                   )}
@@ -257,7 +282,7 @@ export default function RegistrationsPage() {
 
             {/* Pagination */}
             <div className="px-6 py-4 border-t border-outline-variant/50 flex items-center justify-between">
-              <p className="font-label-sm text-label-sm text-on-surface-variant">Showing {displayedRegs.length} entries</p>
+              <p className="font-label-sm text-label-sm text-on-surface-variant">Hiển thị {displayedRegs.length} bản ghi</p>
               <div className="flex items-center gap-2">
                 <button className="p-2 rounded-lg border border-outline-variant hover:bg-surface-container-low transition-colors disabled:opacity-30 disabled:cursor-not-allowed" disabled>
                   <span className="material-symbols-outlined">chevron_left</span>
@@ -272,14 +297,14 @@ export default function RegistrationsPage() {
 
           {/* Quick Filters */}
           <div className="mt-lg flex flex-wrap gap-md text-left">
-            <span className="text-on-surface-variant font-label-md self-center mr-2">Filter State:</span>
+            <span className="text-on-surface-variant font-label-md self-center mr-2">Lọc trạng thái:</span>
             {[
-              { code: 'ALL', label: 'All States' },
-              { code: 'PENDING', label: 'Pending' },
-              { code: 'APPROVED', label: 'Approved' },
-              { code: 'CONFIRMED', label: 'Confirmed (Paid)' },
-              { code: 'COMPLETED', label: 'Completed' },
-              { code: 'CANCELLED', label: 'Cancelled' }
+              { code: 'ALL', label: 'Tất cả' },
+              { code: 'PENDING', label: 'Chờ duyệt' },
+              { code: 'APPROVED', label: 'Đã duyệt' },
+              { code: 'CONFIRMED', label: 'Đã xác nhận cọc' },
+              { code: 'COMPLETED', label: 'Hoàn thành' },
+              { code: 'CANCELLED', label: 'Đã hủy' }
             ].map((tab) => (
               <button
                 key={tab.code}
