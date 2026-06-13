@@ -1,0 +1,70 @@
+@startuml
+skinparam participantBackgroundColor Yellow
+skinparam lifelineStrategy solid
+
+actor "Quản trị viên" as User #Yellow
+boundary "CustomerEditForm" as UI #Yellow
+boundary "AxiosClient" as API #Yellow
+control "JwtMiddleware" as MW #Yellow
+control "CustomersController" as Ctrl #Yellow
+control "CustomerService" as Svc #Yellow
+entity "Customer" as CEnt #Yellow
+database "PostgreSQL" as DB #Yellow
+
+User -> UI : 1: Mở form chỉnh sửa khách hàng
+activate UI
+UI -> UI : 1.1: Tải dữ liệu hiện tại\n(GET /api/Customers/{id} -> điền form)
+UI -> UI : 1.2: Sửa thông tin\n(FullName, Email, Phone, Address,\nDateOfBirth, Gender, Nationality,\nPassportNumber, IdCard, IsActive)
+UI -> API : 1.3: PUT /api/Customers/{id}\nHeader: Authorization: Bearer {token}\nBody: UpdateCustomerRequest
+activate API
+
+API -> API : 1.4: Axios interceptor: gắn Bearer token
+API -> MW : 1.5: Request qua JwtMiddleware
+activate MW
+MW -> MW : 1.6: ValidateToken
+alt 1.7: [Token không hợp lệ]
+MW --> API : 1.7.1: 401
+API --> UI : 1.7.2: Redirect login
+else 1.8: [Token hợp lệ]
+MW --> Ctrl : 1.8.1: Chuyển tiếp
+deactivate MW
+
+activate Ctrl
+Ctrl -> Svc : 1.9: UpdateAsync(id, request)
+activate Svc
+
+Svc -> DB : 1.10: Customers.GetByIdAsync(id)
+activate DB
+DB --> Svc : 1.10.1: Customer hoặc null
+deactivate DB
+
+alt 1.11: [Customer không tồn tại]
+Svc --> Ctrl : 1.11.1: ApiResponse.Fail(\n"Customer not found", 404)
+Ctrl --> API : 1.11.2: 404
+API --> UI : 1.11.3: Lỗi
+else 1.12: [Customer tồn tại]
+Svc -> Svc : 1.12.1: _mapper.Map(request, customer)\n(chỉ cập nhật field != null)\ncustomer.UpdatedAt = UtcNow
+Svc -> DB : 1.12.2: Customers.UpdateAsync(customer)
+activate DB
+DB --> Svc : OK
+deactivate DB
+Svc -> DB : 1.12.3: SaveChangesAsync()
+activate DB
+DB --> Svc : 1.12.3.1: OK
+deactivate DB
+
+Svc -> Svc : 1.12.4: _mapper.Map<CustomerResponse>(customer)
+Svc --> Ctrl : 1.12.5: ApiResponse.Ok(data,\n"Customer updated successfully")
+end
+
+deactivate Svc
+Ctrl --> API : 1.13: 200 OK
+deactivate Ctrl
+API --> UI : 1.14: Response JSON
+deactivate API
+
+UI -> UI : 1.15: Cập nhật UI\n(invalidate cache)
+UI --> User : 1.16: "Customer updated successfully"
+deactivate UI
+
+@enduml

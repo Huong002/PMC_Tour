@@ -1,0 +1,65 @@
+@startuml
+skinparam participantBackgroundColor Yellow
+skinparam lifelineStrategy solid
+
+actor "Người dùng" as User #Yellow
+boundary "FrontendApp" as UI #Yellow
+boundary "AxiosClient" as API #Yellow
+control "AuthController" as Ctrl #Yellow
+control "AuthService" as Svc #Yellow
+entity "User" as UserEnt #Yellow
+database "PostgreSQL" as DB #Yellow
+
+User -> UI : 1: Token hết hạn (HTTP 401)
+activate UI
+UI -> UI : 1.1: Phát hiện 401 từ interceptor\n(localStorage.removeItem("accessToken")\nwindow.location.href = "/login")
+deactivate UI
+
+note right of UI : Luồng refresh token\nđược gọi thủ công
+
+User -> UI : 2: Gọi refresh token
+activate UI
+UI -> UI : 2.1: Lấy refreshToken từ localStorage
+UI -> API : 2.2: POST /api/Auth/refresh\nbody: { refreshToken: "..." }
+activate API
+API -> Ctrl : 2.3: Chuyển tiếp request
+activate Ctrl
+Ctrl -> Ctrl : 2.4: Chuyển đổi body -> string refreshToken
+Ctrl -> Svc : 2.5: RefreshTokenAsync(refreshToken)
+activate Svc
+
+Svc -> DB : 2.6: Users.GetQueryable()\n.Include(u => u.UserRoles)\n.ThenInclude(ur => ur.Role)\n.FirstOrDefaultAsync(u => u.RefreshToken == token)
+activate DB
+DB --> Svc : 2.6.1: User (có Roles) hoặc null
+deactivate DB
+
+alt 2.7: [user == null || RefreshTokenExpiry < UtcNow]
+Svc --> Ctrl : 2.7.1: ApiResponse.Fail(\n"Invalid or expired refresh token", 401)
+Ctrl --> API : 2.7.2: StatusCode(401)
+API --> UI : 2.7.3: Response 401
+UI -> UI : 2.7.4: Xoá token khỏi localStorage\nChuyển hướng đến /login
+UI --> User : 2.7.5: Hiển thị trang đăng nhập
+else 2.8: [RefreshToken hợp lệ]
+Svc -> Svc : 2.8.1: GenerateJwtToken(user)\n(claims + 24h expiry)
+Svc -> Svc : 2.8.2: GenerateRefreshToken()\n(32 bytes random -> Base64)
+
+Svc -> DB : 2.8.3: user.RefreshToken = newRefreshToken\nuser.RefreshTokenExpiry = UtcNow+7d\nSaveChangesAsync()
+activate DB
+DB --> Svc : 2.8.3.1: OK
+deactivate DB
+
+Svc -> Svc : 2.8.4: Tạo LoginResponse mới
+Svc --> Ctrl : 2.8.5: ApiResponse.Ok(LoginResponse)
+end
+
+deactivate Svc
+Ctrl --> API : 2.9: StatusCode(200, ApiResponse<LoginResponse>)
+deactivate Ctrl
+API --> UI : 2.10: Response JSON (newToken, newRefreshToken)
+deactivate API
+
+UI -> UI : 2.11: Cập nhật localStorage:\n- accessToken = newToken\n- refreshToken = newRefreshToken
+UI --> User : 2.12: Token đã được làm mới\n(tiếp tục phiên làm việc)
+deactivate UI
+
+@enduml
