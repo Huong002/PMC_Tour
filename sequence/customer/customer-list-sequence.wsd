@@ -1,0 +1,74 @@
+@startuml
+skinparam participantBackgroundColor Yellow
+skinparam lifelineStrategy solid
+
+actor "Quản trị viên" as User #Yellow
+boundary "CustomersPage" as UI #Yellow
+boundary "AxiosClient" as API #Yellow
+control "JwtMiddleware" as MW #Yellow
+control "CustomersController" as Ctrl #Yellow
+control "CustomerService" as Svc #Yellow
+entity "Customer" as CEnt #Yellow
+database "PostgreSQL" as DB #Yellow
+
+User -> UI : 1: Mở trang quản lý người dùng
+activate UI
+UI -> UI : 1.1: Khởi tạo TanStack Query\n['customers', page, searchTerm]
+UI -> API : 1.2: GET /api/Customers\nHeader: Authorization: Bearer {token}\n?Page=1&PageSize=10
+activate API
+
+API -> API : 1.3: Axios interceptor: gắn Bearer token
+API -> MW : 1.4: Request qua JwtMiddleware
+activate MW
+MW -> MW : 1.5: ValidateToken
+alt 1.6: [Token không hợp lệ]
+MW --> API : 1.6.1: 401
+API --> UI : 1.6.2: Redirect login
+else 1.7: [Token hợp lệ]
+MW --> Ctrl : 1.7.1: Chuyển tiếp
+deactivate MW
+
+activate Ctrl
+Ctrl -> Ctrl : 1.8: Bind query params -> PagedRequest
+Ctrl -> Svc : 1.9: GetAllAsync(request)
+activate Svc
+
+Svc -> DB : 1.10: Customers.GetQueryable()
+activate DB
+DB --> Svc : 1.10.1: IQueryable<Customer>
+deactivate DB
+
+alt 1.11: [SearchTerm không rỗng]
+Svc -> Svc : 1.11.1: query.Where(c =>\nc.FullName.Contains(term) ||\nc.Phone.Contains(term))
+end
+
+Svc -> DB : 1.12: query.CountAsync()
+activate DB
+DB --> Svc : 1.12.1: total
+deactivate DB
+
+Svc -> DB : 1.13: query.OrderByDescending(c => c.CreatedAt)\n.Skip((page-1)*pageSize).Take(pageSize)\n.ToListAsync()
+activate DB
+DB --> Svc : 1.13.1: List<Customer>
+deactivate DB
+
+Svc -> Svc : 1.14: _mapper.Map<List<CustomerResponse>>(items)\n(BookingCount = Bookings.Count)
+Svc -> Svc : 1.15: Tạo PagedResult<CustomerResponse>
+Svc --> Ctrl : 1.16: ApiResponse.Ok(PagedResult)
+deactivate Svc
+Ctrl --> API : 1.17: 200 OK
+deactivate Ctrl
+API --> UI : 1.18: Response JSON
+deactivate API
+
+UI -> UI : 1.19: Hiển thị bảng:\nID, Họ tên, Email, Vai trò,\nTrạng thái, Hành động
+UI --> User : 1.20: Xem danh sách người dùng
+deactivate UI
+
+User -> UI : 2: Nhập từ khoá tìm kiếm
+activate UI
+UI -> UI : 2.1: Cập nhật searchTerm, reset page=1
+UI --> API : 2.2: TanStack Query tự động gọi lại\nGET /api/Customers?SearchTerm=...&Page=1
+deactivate UI
+
+@enduml
