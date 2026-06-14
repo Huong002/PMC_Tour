@@ -39,6 +39,11 @@ export function Sidebar() {
       label: 'Đăng ký Tour',
       icon: 'pending_actions',
     },
+    {
+      href: '/contacts',
+      label: 'Quản lý Liên hệ',
+      icon: 'mail',
+    },
   ];
 
   return (

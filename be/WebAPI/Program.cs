@@ -142,6 +142,10 @@ using (var scope = app.Services.CreateScope())
     // Ensure Tour.Status column exists (for tour status feature)
     await db.Database.ExecuteSqlRawAsync(
         "ALTER TABLE \"Tours\" ADD COLUMN IF NOT EXISTS \"Status\" integer NOT NULL DEFAULT 0");
+
+    // Ensure ContactMessage.Phone column exists (for phone in contact feature)
+    await db.Database.ExecuteSqlRawAsync(
+        "ALTER TABLE \"ContactMessages\" ADD COLUMN IF NOT EXISTS \"Phone\" text NULL");
 }
 
 // ===== Middleware Pipeline =====
