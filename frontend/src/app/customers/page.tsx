@@ -44,6 +44,29 @@ export default function CustomersPage() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['customers'] }),
   });
 
+  const [selectedCustomer, setSelectedCustomer] = useState<CustomerItem | null>(null);
+  const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
+  const [roleInput, setRoleInput] = useState('Customer');
+
+  const roleMutation = useMutation({
+    mutationFn: async () => {
+      if (!selectedCustomer) return;
+      const res = await api.put(`/Customers/${selectedCustomer.id}`, {
+        Role: roleInput,
+      });
+      return res.data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['customers'] });
+      setIsRoleModalOpen(false);
+      setSelectedCustomer(null);
+      alert('Đã phân quyền người dùng thành công!');
+    },
+    onError: (err: any) => {
+      alert(err?.response?.data?.message || 'Có lỗi xảy ra khi phân quyền người dùng.');
+    }
+  });
+
   const items: CustomerItem[] = data?.items || [];
   const totalCount: number = data?.totalCount || 0;
 
@@ -137,6 +160,19 @@ export default function CustomersPage() {
                             <Link href={`/customers/${u.id}`} className="p-2 text-on-surface-variant hover:text-primary transition-colors hover:bg-primary/5 rounded-lg" title="Xem Chi Tiết">
                               <span className="material-symbols-outlined">visibility</span>
                             </Link>
+                            {u.email?.toLowerCase() !== currentUser?.email?.toLowerCase() && (
+                              <button
+                                onClick={() => {
+                                  setSelectedCustomer(u);
+                                  setRoleInput(u.role || 'Customer');
+                                  setIsRoleModalOpen(true);
+                                }}
+                                className="p-2 text-on-surface-variant hover:text-secondary transition-colors hover:bg-secondary/5 rounded-lg"
+                                title="Phân Quyền"
+                              >
+                                <span className="material-symbols-outlined">key</span>
+                              </button>
+                            )}
                             {u.email?.toLowerCase() === currentUser?.email?.toLowerCase() ? (
                               <button
                                 disabled
@@ -200,6 +236,76 @@ export default function CustomersPage() {
               </div>
             </div>
           </div>
+
+          {/* Role Edit Modal */}
+          {isRoleModalOpen && selectedCustomer && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center p-md bg-black/40 backdrop-blur-sm transition-opacity">
+              <div className="bg-white rounded-3xl p-xl max-w-[450px] w-full border border-outline-variant/30 shadow-natural space-y-md text-left">
+                <div className="flex items-center justify-between border-b border-outline-variant/25 pb-sm">
+                  <h3 className="font-title-lg text-title-lg text-primary font-extrabold flex items-center gap-sm">
+                    <span className="material-symbols-outlined">key</span>
+                    Phân Quyền Người Dùng
+                  </h3>
+                  <button 
+                    onClick={() => setIsRoleModalOpen(false)} 
+                    className="p-1 rounded-full hover:bg-surface-variant/20 transition-all text-outline"
+                  >
+                    <span className="material-symbols-outlined">close</span>
+                  </button>
+                </div>
+
+                <div className="space-y-sm text-xs">
+                  <p className="text-on-surface-variant font-medium">
+                    Thay đổi vai trò hệ thống của tài khoản <strong>{selectedCustomer.fullName}</strong> ({selectedCustomer.email}).
+                  </p>
+                  <div>
+                    <label className="font-bold text-outline uppercase tracking-wider block mb-2">Vai Trò Hệ Thống</label>
+                    <div className="relative">
+                      <select
+                        value={roleInput}
+                        onChange={(e) => setRoleInput(e.target.value)}
+                        className="w-full px-md py-3 rounded-lg border border-outline-variant bg-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all font-body-md appearance-none"
+                      >
+                        <option value="Customer">Khách hàng (Customer)</option>
+                        <option value="Staff">Nhân viên (Staff)</option>
+                        <option value="Admin">Quản trị viên (Admin)</option>
+                      </select>
+                      <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-outline pointer-events-none">
+                        keyboard_arrow_down
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex gap-sm border-t border-outline-variant/25 pt-md">
+                  <button
+                    onClick={() => setIsRoleModalOpen(false)}
+                    disabled={roleMutation.isPending}
+                    className="flex-1 py-3 border border-outline hover:bg-surface-variant/20 font-bold rounded-2xl transition-all text-xs"
+                  >
+                    Hủy bỏ
+                  </button>
+                  <button
+                    onClick={() => roleMutation.mutate()}
+                    disabled={roleMutation.isPending}
+                    className="flex-1 bg-primary hover:bg-primary-container text-white font-bold py-3 rounded-2xl transition-bounce active:scale-95 text-xs flex justify-center items-center gap-1.5 shadow-sm"
+                  >
+                    {roleMutation.isPending ? (
+                      <>
+                        <span className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
+                        Đang lưu...
+                      </>
+                    ) : (
+                      <>
+                        <span className="material-symbols-outlined text-sm">save</span>
+                        Lưu thay đổi
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </main>
       </div>
     </AuthGuard>
