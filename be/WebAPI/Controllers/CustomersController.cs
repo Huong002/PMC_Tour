@@ -54,6 +54,14 @@ public class CustomersController : ControllerBase
         return StatusCode(result.StatusCode, result);
     }
 
+    [HttpPatch("{id:int}/toggle-active")]
+    public async Task<IActionResult> ToggleActive(int id)
+    {
+        var currentUserId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
+        var result = await _customerService.ToggleActiveAsync(id, currentUserId);
+        return StatusCode(result.StatusCode, result);
+    }
+
     [HttpGet("current")]
     public async Task<IActionResult> GetCurrent()
     {

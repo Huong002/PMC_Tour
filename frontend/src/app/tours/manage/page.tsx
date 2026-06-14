@@ -8,6 +8,7 @@ import { Sidebar } from '../../../components/layout/Sidebar';
 import { AdminHeader } from '../../../components/layout/AdminHeader';
 import { tourService } from '../../../services/tour.service';
 import { getPlaceholderImage } from '../../../utils/image';
+import { ConfirmDeleteModal, ConfirmDeleteConfig } from '../../../components/ui/ConfirmDeleteModal';
 
 interface ApiTour {
   id: number;
@@ -31,6 +32,16 @@ interface ApiTour {
 export default function ManageToursPage() {
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
+  const [deleteModal, setDeleteModal] = useState<{
+    isOpen: boolean;
+    config: ConfirmDeleteConfig | null;
+    pendingId: number | null;
+  }>({ isOpen: false, config: null, pendingId: null });
+  const [toggleModal, setToggleModal] = useState<{
+    isOpen: boolean;
+    config: ConfirmDeleteConfig | null;
+    tour: ApiTour | null;
+  }>({ isOpen: false, config: null, tour: null });
 
   // Fetch Tours
   const { data: apiResponse, isLoading } = useQuery({
@@ -46,6 +57,7 @@ export default function ManageToursPage() {
     mutationFn: (id: number) => tourService.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['adminTours'] });
+      setDeleteModal({ isOpen: false, config: null, pendingId: null });
     }
   });
 
@@ -54,26 +66,61 @@ export default function ManageToursPage() {
     mutationFn: (id: number) => tourService.toggleActive(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['adminTours'] });
+      setToggleModal({ isOpen: false, config: null, tour: null });
     }
   });
 
   const handleArchive = (id: number, name: string) => {
-    if (confirm(`Bạn có chắc chắn muốn XÓA vĩnh viễn tour "${name}"?\nTour sẽ bị ẩn khỏi hệ thống (soft delete).`)) {
-      deleteMutation.mutate(id);
-    }
+    setDeleteModal({
+      isOpen: true,
+      pendingId: id,
+      config: {
+        itemName: name,
+        itemType: 'tour',
+        icon: 'delete_forever',
+        variant: 'danger',
+        description: 'Tour sẽ bị ẩn khỏi hệ thống (soft delete). Dữ liệu đặt tour hiện có vẫn được bảo toàn.',
+      },
+    });
   };
 
   const handleToggleActive = (tour: ApiTour) => {
-    const action = tour.isActive ? 'ĐÓNG đăng ký' : 'MỞ đăng ký';
-    if (confirm(`Bạn có chắc chắn muốn ${action} cho tour "${tour.name}"?`)) {
-      toggleMutation.mutate(tour.id);
-    }
+    const isClosing = tour.isActive;
+    setToggleModal({
+      isOpen: true,
+      tour,
+      config: {
+        itemName: tour.name,
+        itemType: 'tour',
+        icon: isClosing ? 'lock' : 'lock_open',
+        variant: 'warning',
+        description: isClosing
+          ? 'Tour sẽ ngừng nhận đăng ký mới. Các booking đã xác nhận vẫn giữ nguyên.'
+          : 'Tour sẽ mở lại để khách hàng đăng ký. Kiểm tra số chỗ còn lại trước khi xác nhận.',
+      },
+    });
   };
 
   const tours = apiResponse || [];
 
   return (
     <AuthGuard allowedRoles={['STAFF', 'ADMIN']}>
+      {/* Delete Confirm Modal */}
+      <ConfirmDeleteModal
+        isOpen={deleteModal.isOpen}
+        config={deleteModal.config}
+        isPending={deleteMutation.isPending}
+        onConfirm={() => deleteModal.pendingId && deleteMutation.mutate(deleteModal.pendingId)}
+        onCancel={() => setDeleteModal({ isOpen: false, config: null, pendingId: null })}
+      />
+      {/* Toggle Confirm Modal */}
+      <ConfirmDeleteModal
+        isOpen={toggleModal.isOpen}
+        config={toggleModal.config}
+        isPending={toggleMutation.isPending}
+        onConfirm={() => toggleModal.tour && toggleMutation.mutate(toggleModal.tour.id)}
+        onCancel={() => setToggleModal({ isOpen: false, config: null, tour: null })}
+      />
       <div className="bg-surface text-on-surface font-body-md min-h-screen flex">
         {/* Sidebar */}
         <Sidebar />

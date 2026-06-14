@@ -6,6 +6,7 @@ import { AuthGuard } from '../../components/layout/AuthGuard';
 import { Sidebar } from '../../components/layout/Sidebar';
 import { AdminHeader } from '../../components/layout/AdminHeader';
 import { contactService, ContactMessageDto } from '../../services/contact.service';
+import { ConfirmDeleteModal, ConfirmDeleteConfig } from '../../components/ui/ConfirmDeleteModal';
 
 export default function ContactsPage() {
   const queryClient = useQueryClient();
@@ -15,6 +16,19 @@ export default function ContactsPage() {
   const [page, setPage] = useState(1);
   const pageSize = 8;
 
+  // Delete modal state
+  const [deleteModal, setDeleteModal] = useState<{
+    isOpen: boolean;
+    config: ConfirmDeleteConfig | null;
+    pendingId: number | null;
+  }>({ isOpen: false, config: null, pendingId: null });
+  const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
+
+  const showToast = (msg: string, type: 'success' | 'error' = 'success') => {
+    setToast({ msg, type });
+    setTimeout(() => setToast(null), 3000);
+  };
+
   // State for reply modal
   const [isReplyOpen, setIsReplyOpen] = useState(false);
   const [replyBody, setReplyBody] = useState('');
@@ -22,16 +36,15 @@ export default function ContactsPage() {
 
   const handleSendReply = (email?: string) => {
     if (!replyBody.trim()) {
-      alert('Vui lòng nhập nội dung phản hồi!');
+      showToast('Vui lòng nhập nội dung phản hồi!', 'error');
       return;
     }
     setIsSendingReply(true);
-    // Giả lập gửi email thành công
     setTimeout(() => {
       setIsSendingReply(false);
       setIsReplyOpen(false);
       setReplyBody('');
-      alert(`Đã gửi email phản hồi thành công tới ${email}!`);
+      showToast(`Đã gửi email phản hồi thành công tới ${email}!`);
     }, 1500);
   };
 
@@ -72,17 +85,27 @@ export default function ContactsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['contacts'] });
       setSelectedId(null);
-      alert('Đã xóa thư liên hệ thành công!');
+      setDeleteModal({ isOpen: false, config: null, pendingId: null });
+      showToast('Đã xóa thư liên hệ thành công!');
     },
     onError: (err: any) => {
-      alert(err?.response?.data?.message || 'Có lỗi xảy ra khi xóa thư liên hệ.');
+      setDeleteModal({ isOpen: false, config: null, pendingId: null });
+      showToast(err?.response?.data?.message || 'Có lỗi xảy ra khi xóa thư liên hệ.', 'error');
     }
   });
 
   const handleDelete = (id: number, name: string) => {
-    if (confirm(`Bạn có chắc chắn muốn xóa thư liên hệ của "${name}" không?`)) {
-      deleteMutation.mutate(id);
-    }
+    setDeleteModal({
+      isOpen: true,
+      pendingId: id,
+      config: {
+        itemName: name,
+        itemType: 'thư liên hệ',
+        icon: 'mail',
+        variant: 'danger',
+        description: 'Thư liên hệ sẽ bị xóa vĩnh viễn khỏi hệ thống.',
+      },
+    });
   };
 
   const rawItems = contactsResponse?.items || [];
@@ -99,6 +122,29 @@ export default function ContactsPage() {
 
   return (
     <AuthGuard allowedRoles={['STAFF', 'ADMIN']}>
+      {/* Delete Confirm Modal */}
+      <ConfirmDeleteModal
+        isOpen={deleteModal.isOpen}
+        config={deleteModal.config}
+        isPending={deleteMutation.isPending}
+        onConfirm={() => deleteModal.pendingId && deleteMutation.mutate(deleteModal.pendingId)}
+        onCancel={() => setDeleteModal({ isOpen: false, config: null, pendingId: null })}
+      />
+
+      {/* Toast Notification */}
+      {toast && (
+        <div className={`fixed top-6 right-6 z-[300] flex items-center gap-3 px-5 py-4 rounded-2xl shadow-xl text-white font-bold text-sm animate-[slideIn_0.3s_ease] ${
+          toast.type === 'success' ? 'bg-emerald-500' : 'bg-error'
+        }`}
+        style={{ animation: 'slideIn 0.3s ease' }}
+        >
+          <span className="material-symbols-outlined">
+            {toast.type === 'success' ? 'check_circle' : 'error'}
+          </span>
+          {toast.msg}
+          <style>{`@keyframes slideIn { from { opacity:0; transform:translateX(80px); } to { opacity:1; transform:translateX(0); } }`}</style>
+        </div>
+      )}
       <div className="bg-surface text-on-surface font-body-md min-h-screen flex">
         {/* Sidebar */}
         <Sidebar />

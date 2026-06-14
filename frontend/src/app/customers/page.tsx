@@ -8,6 +8,7 @@ import { Sidebar } from '../../components/layout/Sidebar';
 import { AdminHeader } from '../../components/layout/AdminHeader';
 import api from '../../services/api';
 import { useAuth } from '../../hooks/useAuth';
+import { ConfirmDeleteModal, ConfirmDeleteConfig } from '../../components/ui/ConfirmDeleteModal';
 
 interface CustomerItem {
   id: number;
@@ -25,6 +26,12 @@ export default function CustomersPage() {
   const { user: currentUser } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [page, setPage] = useState(1);
+  // Modal xóa/khóa tài khoản
+  const [lockModal, setLockModal] = useState<{
+    isOpen: boolean;
+    config: ConfirmDeleteConfig | null;
+    targetUser: CustomerItem | null;
+  }>({ isOpen: false, config: null, targetUser: null });
 
   const { data, isLoading } = useQuery({
     queryKey: ['customers', page, searchTerm],
@@ -38,10 +45,13 @@ export default function CustomersPage() {
 
   const toggleMutation = useMutation({
     mutationFn: async (id: number) => {
-      const res = await api.delete(`/Customers/${id}`);
+      const res = await api.patch(`/Customers/${id}/toggle-active`);
       return res.data;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['customers'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['customers'] });
+      setLockModal({ isOpen: false, config: null, targetUser: null });
+    },
   });
 
   const [selectedCustomer, setSelectedCustomer] = useState<CustomerItem | null>(null);
@@ -184,9 +194,19 @@ export default function CustomersPage() {
                             ) : (
                               <button
                                 onClick={() => {
-                                  if (confirm(`Bạn có chắc chắn muốn ${u.isActive ? 'Khóa' : 'Mở khóa'} tài khoản của "${u.fullName}"?`)) {
-                                    toggleMutation.mutate(u.id);
-                                  }
+                                  setLockModal({
+                                    isOpen: true,
+                                    targetUser: u,
+                                    config: {
+                                      itemName: u.fullName,
+                                      itemType: 'tài khoản',
+                                      icon: u.isActive ? 'lock' : 'lock_open',
+                                      variant: u.isActive ? 'danger' : 'warning',
+                                      description: u.isActive
+                                        ? `Tài khoản "${u.fullName}" sẽ bị khóa và không thể đăng nhập vào hệ thống.`
+                                        : `Tài khoản "${u.fullName}" sẽ được mở khóa và có thể đăng nhập trở lại.`,
+                                    },
+                                  });
                                 }}
                                 disabled={toggleMutation.isPending}
                                 className={`p-2 rounded-lg transition-colors hover:bg-surface-container ${u.isActive ? 'text-error hover:text-error/85 hover:bg-error/5' : 'text-tertiary hover:text-tertiary/85 hover:bg-tertiary/5'}`}
@@ -308,6 +328,15 @@ export default function CustomersPage() {
           )}
         </main>
       </div>
+
+      {/* Lock/Unlock Account Modal */}
+      <ConfirmDeleteModal
+        isOpen={lockModal.isOpen}
+        config={lockModal.config}
+        isPending={toggleMutation.isPending}
+        onConfirm={() => lockModal.targetUser && toggleMutation.mutate(lockModal.targetUser.id)}
+        onCancel={() => setLockModal({ isOpen: false, config: null, targetUser: null })}
+      />
     </AuthGuard>
   );
 }

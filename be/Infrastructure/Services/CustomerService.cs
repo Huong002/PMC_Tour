@@ -124,7 +124,7 @@ public class CustomerService : ICustomerService
             return ApiResponse<bool>.Fail("Customer not found", 404);
 
         if (customer.UserId == currentUserId)
-            return ApiResponse<bool>.Fail("Bạn không thể tự khóa tài khoản của chính mình", 400);
+            return ApiResponse<bool>.Fail("Bạn không thể tự xóa tài khoản của chính mình", 400);
 
         customer.IsDeleted = true;
         customer.DeletedAt = DateTime.UtcNow;
@@ -132,6 +132,33 @@ public class CustomerService : ICustomerService
         await _unitOfWork.SaveChangesAsync();
 
         return ApiResponse<bool>.Ok(true, "Customer deleted successfully");
+    }
+
+    public async Task<ApiResponse<CustomerResponse>> ToggleActiveAsync(int id, int currentUserId)
+    {
+        var customer = await _unitOfWork.Customers.GetQueryable()
+            .Include(c => c.User)
+                .ThenInclude(u => u!.UserRoles)
+                    .ThenInclude(ur => ur.Role)
+            .FirstOrDefaultAsync(c => c.Id == id);
+
+        if (customer == null)
+            return ApiResponse<CustomerResponse>.Fail("Customer not found", 404);
+
+        if (customer.UserId == currentUserId)
+            return ApiResponse<CustomerResponse>.Fail("Bạn không thể tự khóa tài khoản của chính mình", 400);
+
+        // Chỉ toggle IsActive — KHÔNG đụng vào IsDeleted
+        customer.IsActive = !customer.IsActive;
+        customer.UpdatedAt = DateTime.UtcNow;
+
+        await _unitOfWork.Customers.UpdateAsync(customer);
+        await _unitOfWork.SaveChangesAsync();
+
+        var action = customer.IsActive ? "mở khóa" : "khóa";
+        return ApiResponse<CustomerResponse>.Ok(
+            _mapper.Map<CustomerResponse>(customer),
+            $"Đã {action} tài khoản thành công");
     }
 
     public async Task<ApiResponse<CustomerResponse>> GetCurrentCustomerAsync(int userId)
