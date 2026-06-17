@@ -31,7 +31,7 @@ function mapTour(t: ApiTour): DisplayTour {
     '4': '4.5 (33 đánh giá)', '5': '4.6 (47 đánh giá)', '6': '4.8 (92 đánh giá)',
     '7': '5.0 (58 đánh giá)', '8': '4.7 (58 đánh giá)',
   };
-  
+
   let durationStr = '';
   if (t.durationDays > 0 && t.durationNights > 0) {
     durationStr = `${t.durationDays} Ngày ${t.durationNights} Đêm`;
@@ -226,11 +226,10 @@ function ToursPageContent() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`px-5 py-2.5 rounded-full text-xs md:text-sm font-semibold transition-all duration-300 ${
-                activeTab === tab.id
-                  ? 'bg-[#0E7490] text-white shadow-md shadow-cyan-900/10'
-                  : 'bg-white text-slate-600 hover:text-[#0E7490] border border-slate-200 hover:border-[#0E7490]/30'
-              }`}
+              className={`px-5 py-2.5 rounded-full text-xs md:text-sm font-semibold transition-all duration-300 ${activeTab === tab.id
+                ? 'bg-[#0E7490] text-white shadow-md shadow-cyan-900/10'
+                : 'bg-white text-slate-600 hover:text-[#0E7490] border border-slate-200 hover:border-[#0E7490]/30'
+                }`}
             >
               {tab.label}
             </button>
@@ -277,7 +276,7 @@ function ToursPageContent() {
 
         {/* Main Content Layout */}
         <div className="flex flex-col lg:flex-row gap-8 items-start justify-between">
-          
+
           {/* Desktop Filter Sidebar (Card style) */}
           <aside className="w-full lg:w-[300px] lg:block hidden sticky top-24 bg-white rounded-2xl border border-slate-200 shadow-sm p-6 text-left space-y-6 shrink-0">
             <div className="border-b border-slate-100 pb-4">
@@ -405,13 +404,12 @@ function ToursPageContent() {
                 tours.map((tour, index) => {
                   // Hallmark/Booking style layout for the first prominent featured tour
                   const isFeatured = index === 0 && tours.length > 1 && activeTab === 'ALL';
-                  
+
                   return (
                     <div
                       key={tour.id}
-                      className={`group bg-white rounded-2xl overflow-hidden border border-slate-200/80 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between ${
-                        isFeatured ? 'md:col-span-2 lg:col-span-2 md:flex-row' : ''
-                      }`}
+                      className={`group bg-white rounded-2xl overflow-hidden border border-slate-200/80 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between ${isFeatured ? 'md:col-span-2 lg:col-span-2 md:flex-row' : ''
+                        }`}
                     >
                       {/* Image container */}
                       <div className={`relative overflow-hidden shrink-0 ${isFeatured ? 'h-64 md:h-full md:w-1/2 aspect-[4/3] md:aspect-auto' : 'h-52'}`}>

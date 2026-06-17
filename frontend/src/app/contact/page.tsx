@@ -3,11 +3,13 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Navbar } from '../../components/layout/Navbar';
+import { contactService } from '../../services/contact.service';
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
+    phone: '',
     subject: 'Yêu cầu chung',
     message: ''
   });
@@ -22,17 +24,18 @@ export default function ContactPage() {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      await contactService.create(formData);
       setIsSubmitting(false);
       setSubmitSuccess(true);
       setFormData({
         name: '',
         email: '',
+        phone: '',
         subject: 'Yêu cầu chung',
         message: ''
       });
@@ -41,7 +44,10 @@ export default function ContactPage() {
       setTimeout(() => {
         setSubmitSuccess(false);
       }, 3000);
-    }, 1500);
+    } catch (error: any) {
+      setIsSubmitting(false);
+      alert(error?.response?.data?.message || 'Có lỗi xảy ra khi gửi tin nhắn liên hệ. Vui lòng thử lại sau.');
+    }
   };
 
   return (
@@ -85,6 +91,19 @@ export default function ContactPage() {
                     />
                   </div>
                   <div className="space-y-xs">
+                    <label className="font-label-md text-label-md text-outline">Số điện thoại</label>
+                    <input
+                      name="phone"
+                      value={formData.phone}
+                      onChange={handleChange}
+                      className="w-full px-md py-3 rounded-lg border border-outline-variant bg-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all font-body-md"
+                      placeholder="Số điện thoại của bạn"
+                      type="text"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-md">
+                  <div className="space-y-xs">
                     <label className="font-label-md text-label-md text-outline">Email</label>
                     <input
                       name="email"
@@ -96,25 +115,25 @@ export default function ContactPage() {
                       type="email"
                     />
                   </div>
-                </div>
-                <div className="space-y-xs">
-                  <label className="font-label-md text-label-md text-outline">Chủ đề</label>
-                  <div className="relative">
-                    <select
-                      name="subject"
-                      value={formData.subject}
-                      onChange={handleChange}
-                      className="w-full px-md py-3 rounded-lg border border-outline-variant bg-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all font-body-md appearance-none"
-                    >
-                      <option value="Yêu cầu chung">Yêu cầu chung</option>
-                      <option value="Hỗ trợ đặt tour">Hỗ trợ đặt tour</option>
-                      <option value="Cơ hội hợp tác">Cơ hội hợp tác</option>
-                      <option value="Yêu cầu lịch trình riêng">Yêu cầu lịch trình riêng</option>
-                      <option value="Phản hồi & Góp ý">Phản hồi & Góp ý</option>
-                    </select>
-                    <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-outline pointer-events-none">
-                      keyboard_arrow_down
-                    </span>
+                  <div className="space-y-xs">
+                    <label className="font-label-md text-label-md text-outline">Chủ đề</label>
+                    <div className="relative">
+                      <select
+                        name="subject"
+                        value={formData.subject}
+                        onChange={handleChange}
+                        className="w-full px-md py-3 rounded-lg border border-outline-variant bg-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all font-body-md appearance-none"
+                      >
+                        <option value="Yêu cầu chung">Yêu cầu chung</option>
+                        <option value="Hỗ trợ đặt tour">Hỗ trợ đặt tour</option>
+                        <option value="Cơ hội hợp tác">Cơ hội hợp tác</option>
+                        <option value="Yêu cầu lịch trình riêng">Yêu cầu lịch trình riêng</option>
+                        <option value="Phản hồi & Góp ý">Phản hồi & Góp ý</option>
+                      </select>
+                      <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-outline pointer-events-none">
+                        keyboard_arrow_down
+                      </span>
+                    </div>
                   </div>
                 </div>
                 <div className="space-y-xs">

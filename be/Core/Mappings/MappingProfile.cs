@@ -56,7 +56,11 @@ public class MappingProfile : Profile
         CreateMap<BookingDetail, BookingDetailResponse>();
 
         CreateMap<Customer, CustomerResponse>()
-            .ForMember(d => d.BookingCount, o => o.MapFrom(s => s.Bookings.Count));
+            .ForMember(d => d.BookingCount, o => o.MapFrom(s => s.Bookings.Count))
+            .ForMember(d => d.Role, o => o.MapFrom(s => 
+                s.User != null && s.User.UserRoles != null && s.User.UserRoles.Any()
+                ? s.User.UserRoles.First().Role.Name
+                : "Customer"));
 
         CreateMap<CreateCustomerRequest, Customer>();
         CreateMap<UpdateCustomerRequest, Customer>()

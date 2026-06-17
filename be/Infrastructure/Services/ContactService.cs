@@ -62,6 +62,13 @@ public class ContactService : IContactService
         if (contact == null)
             return ApiResponse<ContactResponse>.Fail("Message not found", 404);
 
+        if (!contact.IsRead)
+        {
+            contact.IsRead = true;
+            await _unitOfWork.ContactMessages.UpdateAsync(contact);
+            await _unitOfWork.SaveChangesAsync();
+        }
+
         return ApiResponse<ContactResponse>.Ok(_mapper.Map<ContactResponse>(contact));
     }
 

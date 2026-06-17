@@ -1,0 +1,104 @@
+@startuml
+skinparam participantBackgroundColor Yellow
+skinparam lifelineStrategy solid
+
+actor "Quản trị viên" as User #Yellow
+boundary "EditTourPage" as UI #Yellow
+boundary "AxiosClient" as API #Yellow
+control "JwtMiddleware" as MW #Yellow
+control "ToursController" as Ctrl #Yellow
+control "TourService" as Svc #Yellow
+entity "Tour" as TEnt #Yellow
+entity "TourImage" as TIEnt #Yellow
+database "PostgreSQL" as DB #Yellow
+
+User -> UI : 1: Mở form chỉnh sửa tour
+activate UI
+UI -> UI : 1.1: Tải dữ liệu tour hiện tại\n(GET /api/Tours/{id})
+UI -> UI : 1.2: Chỉnh sửa thông tin\n(sửa tên, giá, mô tả,\nthêm/xoá ảnh, v.v.)
+UI -> API : 1.3: PUT /api/Tours/{id}\nHeader: Authorization: Bearer {token}\nBody: UpdateTourRequest
+activate API
+
+API -> API : 1.4: Axios interceptor:\ngắn Bearer token
+API -> MW : 1.5: Request qua JwtMiddleware
+activate MW
+MW -> MW : 1.6: ValidateToken + extract userId
+alt 1.7: [Token không hợp lệ]
+MW --> Ctrl : 1.7.1: 401 Unauthorized
+Ctrl --> API : 1.7.2: StatusCode(401)
+API --> UI : 1.7.3: Redirect login
+else 1.8: [Token hợp lệ]
+MW -> MW : 1.8.1: userId từ claim
+MW --> Ctrl : 1.8.2: Chuyển tiếp
+deactivate MW
+
+activate Ctrl
+Ctrl -> Ctrl : 1.9: Lấy userId từ claim\nParse id từ route
+Ctrl -> Svc : 1.10: UpdateAsync(id, request, userId)
+activate Svc
+
+Svc -> DB : 1.11: Tours.GetByIdAsync(id)
+activate DB
+DB --> Svc : 1.11.1: Tour hoặc null
+deactivate DB
+
+alt 1.12: [Tour không tồn tại]
+Svc --> Ctrl : 1.12.1: ApiResponse<TourResponse>.Fail(\n"Tour not found", 404)
+else 1.13: [Tour tồn tại]
+Svc -> Svc : 1.13.1: _mapper.Map(request, tour)\n(chỉ cập nhật các field != null)\ntour.UpdatedBy = userId\ntour.UpdatedAt = UtcNow
+
+alt 1.13.2: [request.ImageUrls != null]\n(Cập nhật danh sách ảnh)
+Svc -> DB : 1.13.2.1: TourImages.GetQueryable()\n.Where(i => i.TourId == id)\n.ToListAsync()
+activate DB
+DB --> Svc : 1.13.2.1.1: List<TourImage> (ảnh cũ)
+deactivate DB
+
+loop 1.13.2.2: [Với mỗi ảnh cũ]
+Svc -> DB : 1.13.2.2.1: TourImages.DeleteAsync(img)
+activate DB
+DB --> Svc : OK
+deactivate DB
+end
+
+loop 1.13.2.3: [Với mỗi URL trong ImageUrls]
+alt 1.13.2.3.1: [URL không rỗng]
+Svc -> DB : 1.13.2.3.1.1: TourImages.AddAsync(\nnew TourImage { TourId, ImageUrl, SortOrder })
+activate DB
+DB --> Svc : OK
+deactivate DB
+end
+end
+
+else 1.13.3: [request.ImageUrls == null]\n(Giữ nguyên ảnh cũ)
+end
+
+Svc -> DB : 1.13.4: Tours.UpdateAsync(tour)
+activate DB
+DB --> Svc : OK
+deactivate DB
+Svc -> DB : 1.13.5: SaveChangesAsync()
+activate DB
+DB --> Svc : 1.13.5.1: OK
+deactivate DB
+
+Svc -> DB : 1.13.6: GetByIdAsync(tour.Id)\n(Include TourType, Images, Itineraries)
+activate DB
+DB --> Svc : 1.13.6.1: Tour đã cập nhật
+deactivate DB
+Svc -> Svc : 1.13.7: Map -> TourResponse
+Svc --> Ctrl : 1.13.8: ApiResponse<TourResponse>.Ok(\nresult.Data!, "Tour updated successfully")
+end
+
+deactivate Svc
+Ctrl --> API : 1.14: StatusCode(200)
+deactivate Ctrl
+API --> UI : 1.15: Response JSON tour đã cập nhật
+deactivate API
+
+UI -> UI : 1.16: Cập nhật UI\n(invalidate TanStack Query cache)
+UI --> User : 1.17: "Tour updated successfully"
+deactivate UI
+
+end
+
+@enduml

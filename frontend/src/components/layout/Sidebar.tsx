@@ -39,7 +39,18 @@ export function Sidebar() {
       label: 'Đăng ký Tour',
       icon: 'pending_actions',
     },
+    {
+      href: '/contacts',
+      label: 'Quản lý Liên hệ',
+      icon: 'mail',
+    },
   ];
+  const filteredMenuItems = menuItems.filter(item => {
+    if (item.href === '/customers') {
+      return user?.role?.toUpperCase() === 'ADMIN';
+    }
+    return true;
+  });
 
   return (
     <aside className="h-screen w-64 fixed left-0 top-0 bg-surface-container-low border-r border-outline-variant/30 shadow-sm flex flex-col p-md z-50">
@@ -56,7 +67,7 @@ export function Sidebar() {
 
       {/* Navigation menu */}
       <nav className="flex-1 space-y-1">
-        {menuItems.map((item) => {
+        {filteredMenuItems.map((item) => {
           const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href));
           return (
             <Link
