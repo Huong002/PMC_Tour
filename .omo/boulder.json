@@ -1,0 +1,89 @@
+{
+  "active_plan": "D:\\src\\PMC\\PMC_Tour\\.omo\\plans\\contact-api.md",
+  "started_at": "2026-06-12T12:36:00.000Z",
+  "session_ids": [
+    "opencode:ses_144443f85ffekBDiUXSQgdlSiC",
+    "opencode:ses_1442024c7ffeSv4a01UkFulm4d",
+    "opencode:ses_1442019c4ffef99L7Y4zYd233M",
+    "opencode:ses_144200f4bffe4lOBbPT8JPYxnW",
+    "opencode:ses_1441fc613ffeNHVAf7aQ88uazv"
+  ],
+  "plan_name": "contact-api",
+  "session_origins": {
+    "opencode:ses_144443f85ffekBDiUXSQgdlSiC": "direct",
+    "opencode:ses_1442024c7ffeSv4a01UkFulm4d": "appended",
+    "opencode:ses_1442019c4ffef99L7Y4zYd233M": "appended",
+    "opencode:ses_144200f4bffe4lOBbPT8JPYxnW": "appended",
+    "opencode:ses_1441fc613ffeNHVAf7aQ88uazv": "appended"
+  },
+  "task_sessions": {
+    "todo:1": {
+      "task_key": "todo:1",
+      "task_label": "1",
+      "task_title": "**Create ContactMessage entity + DB migration**",
+      "session_id": "opencode:ses_14425b9b0ffeP24EduWmuHT2Rh",
+      "agent": "code-generator",
+      "started_at": "2026-06-12T12:41:16.551Z",
+      "status": "completed",
+      "updated_at": "2026-06-12T12:47:46.967Z",
+      "ended_at": "2026-06-12T12:47:46.966Z",
+      "elapsed_ms": 390415
+    },
+    "todo:2": {
+      "task_key": "todo:2",
+      "task_label": "2",
+      "task_title": "**Create Contact DTOs (Request + Response)**",
+      "session_id": "opencode:ses_1441fc613ffeNHVAf7aQ88uazv",
+      "agent": "code-generator",
+      "updated_at": "2026-06-12T12:48:15.085Z"
+    }
+  },
+  "schema_version": 2,
+  "works": {
+    "contact-api-legacy": {
+      "work_id": "contact-api-legacy",
+      "active_plan": "D:\\src\\PMC\\PMC_Tour\\.omo\\plans\\contact-api.md",
+      "plan_name": "contact-api",
+      "started_at": "2026-06-12T12:36:00.000Z",
+      "updated_at": "2026-06-12T12:48:15.085Z",
+      "session_ids": [
+        "opencode:ses_144443f85ffekBDiUXSQgdlSiC",
+        "opencode:ses_1442024c7ffeSv4a01UkFulm4d",
+        "opencode:ses_1442019c4ffef99L7Y4zYd233M",
+        "opencode:ses_144200f4bffe4lOBbPT8JPYxnW",
+        "opencode:ses_1441fc613ffeNHVAf7aQ88uazv"
+      ],
+      "session_origins": {
+        "opencode:ses_144443f85ffekBDiUXSQgdlSiC": "direct",
+        "opencode:ses_1442024c7ffeSv4a01UkFulm4d": "appended",
+        "opencode:ses_1442019c4ffef99L7Y4zYd233M": "appended",
+        "opencode:ses_144200f4bffe4lOBbPT8JPYxnW": "appended",
+        "opencode:ses_1441fc613ffeNHVAf7aQ88uazv": "appended"
+      },
+      "task_sessions": {
+        "todo:1": {
+          "task_key": "todo:1",
+          "task_label": "1",
+          "task_title": "**Create ContactMessage entity + DB migration**",
+          "session_id": "opencode:ses_14425b9b0ffeP24EduWmuHT2Rh",
+          "agent": "code-generator",
+          "started_at": "2026-06-12T12:41:16.551Z",
+          "status": "completed",
+          "updated_at": "2026-06-12T12:47:46.967Z",
+          "ended_at": "2026-06-12T12:47:46.966Z",
+          "elapsed_ms": 390415
+        },
+        "todo:2": {
+          "task_key": "todo:2",
+          "task_label": "2",
+          "task_title": "**Create Contact DTOs (Request + Response)**",
+          "session_id": "opencode:ses_1441fc613ffeNHVAf7aQ88uazv",
+          "agent": "code-generator",
+          "updated_at": "2026-06-12T12:48:15.085Z"
+        }
+      }
+    }
+  },
+  "active_work_id": "contact-api-legacy",
+  "updated_at": "2026-06-12T12:48:15.085Z"
+}

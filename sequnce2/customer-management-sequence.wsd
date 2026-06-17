@@ -1,0 +1,273 @@
+@startuml
+skinparam backgroundColor #FEFEFE
+skinparam participantBackgroundColor Yellow
+skinparam participantBorderColor #B8860B
+skinparam actorBackgroundColor Yellow
+skinparam actorBorderColor #B8860B
+skinparam boundaryBackgroundColor Yellow
+skinparam boundaryBorderColor #B8860B
+skinparam controlBackgroundColor Yellow
+skinparam controlBorderColor #B8860B
+skinparam entityBackgroundColor Yellow
+skinparam entityBorderColor #B8860B
+skinparam databaseBackgroundColor Yellow
+skinparam databaseBorderColor #B8860B
+skinparam lifelineStrategy solid
+skinparam sequenceMessageAlign center
+
+actor "Admin" as Admin #Yellow
+boundary "CustomersPage\n(Next.js Frontend)" as UI #Yellow
+boundary "AuthGuard\n(Admin only)" as AuthGuard #Yellow
+boundary "customerService\n(API Client)" as APIClient #Yellow
+boundary "api.ts\n(Axios Instance)" as Axios #Yellow
+control "JwtMiddleware" as JWT #Yellow
+control "CustomersController" as Ctrl #Yellow
+control "CustomerService" as Svc #Yellow
+entity "UnitOfWork" as UoW #Yellow
+database "GenericRepository\nCustomer" as Repo #Yellow
+database "PostgreSQL\n(PMC_Tour)" as DB #Yellow
+
+== 1: Xem danh sach khach hang (GET /api/Customers) ==
+
+Admin -> UI : 1: Mo trang Customers (/customers)
+activate UI
+
+UI -> AuthGuard : 1.1: Kiem tra authentication & role ADMIN
+activate AuthGuard
+AuthGuard -> AuthGuard : 1.1.1: useAuth() kiem tra user, isLoading
+alt [1.1.2] Chua dang nhap
+    AuthGuard --> UI : 1.1.2.1: Redirect /login
+else [1.1.3] Khong phai ADMIN
+    AuthGuard --> UI : 1.1.3.1: Redirect ve /
+else [1.1.4] Da xac thuc & ADMIN
+    AuthGuard --> UI : 1.1.4.1: Render children
+end
+deactivate AuthGuard
+
+UI -> UI : 1.2: useQuery(['customers', page, searchTerm])
+UI -> APIClient : 1.3: customerService.getAll({ Page, PageSize, SearchTerm })
+activate APIClient
+
+APIClient -> Axios : 1.3.1: api.get('/Customers', { params })
+activate Axios
+note right: Axios interceptor tu dong them\nAuthorization: Bearer {token}
+
+Axios -> JWT : 1.3.2: HTTP GET /api/Customers?Page=1&PageSize=10
+activate JWT
+
+JWT -> JWT : 1.3.2.1: Doc & validate JWT token
+alt [1.3.2.2] Token hop le
+    JWT -> JWT : 1.3.2.2.1: Verify HMAC-SHA256 signature, issuer, audience
+    JWT -> JWT : 1.3.2.2.2: Attach User entity to HttpContext.Items
+else [1.3.2.3] Token khong hop le
+    note right: [Authorize] tra ve 401
+end
+JWT -> Ctrl : 1.3.2.4: Chuyen tiep request
+deactivate JWT
+
+activate Ctrl
+note right: [Authorize] attribute dam bao\nchi authenticated user moi goi duoc
+
+Ctrl -> Svc : 1.3.3: GetAllAsync(pagedRequest)
+activate Svc
+
+Svc -> UoW : 1.3.3.1: Customers.GetQueryable()
+activate UoW
+UoW -> Repo : 1.3.3.1.1: IQueryable<Customer>
+deactivate UoW
+
+Repo -> Repo : 1.3.3.2: Loc theo SearchTerm (FullName, Phone)
+Repo -> Repo : 1.3.3.3: CountAsync() -> total
+
+Repo -> DB : 1.3.3.4: SELECT ... FROM Customers\nWHERE ... \nORDER BY CreatedAt DESC\nOFFSET ... LIMIT ...
+activate DB
+DB --> Repo : 1.3.3.4.1: List<Customer> + total
+deactivate DB
+
+Repo --> Svc : 1.3.3.5: List<Customer>
+Svc -> Svc : 1.3.3.6: AutoMapper.Map -> List<CustomerResponse>
+Svc --> Ctrl : 1.3.3.7: ApiResponse<PagedResult<CustomerResponse>>
+deactivate Svc
+
+Ctrl --> Axios : 1.3.4: HTTP 200 + JSON
+deactivate Ctrl
+
+Axios --> APIClient : 1.3.5: res.data
+deactivate Axios
+
+APIClient --> UI : 1.3.6: ApiResponse (items, totalCount)
+deactivate APIClient
+
+UI -> UI : 1.3.7: Render bang customer + stats
+UI --> Admin : 1.3.8: Hien thi danh sach khach hang
+deactivate UI
+
+== 2: Xem chi tiet khach hang (GET /api/Customers/{id}) ==
+
+Admin -> UI : 2: Click "Xem Chi Tiet"
+activate UI
+
+UI -> APIClient : 2.1: customerService.getById(id)
+activate APIClient
+
+APIClient -> Axios : 2.1.1: api.get('/Customers/{id}')
+activate Axios
+
+Axios -> JWT : 2.1.2: HTTP GET /api/Customers/{id}
+activate JWT
+JWT -> Ctrl : 2.1.2.1: After JWT validation
+deactivate JWT
+
+activate Ctrl
+Ctrl -> Svc : 2.1.3: GetByIdAsync(id)
+activate Svc
+
+Svc -> UoW : 2.1.3.1: Customers.GetQueryable().Include(Bookings)
+activate UoW
+UoW -> DB : 2.1.3.1.1: SELECT ... FROM Customers\nLEFT JOIN Bookings ON ...\nWHERE Customers.Id = {id}
+activate DB
+DB --> UoW : 2.1.3.1.2: Customer + Bookings
+deactivate DB
+deactivate UoW
+
+alt [2.1.3.2] Khong tim thay
+    Svc --> Ctrl : 2.1.3.2.1: ApiResponse.Fail("Customer not found", 404)
+else [2.1.3.3] Tim thay
+    Svc -> Svc : 2.1.3.3.1: AutoMapper.Map -> CustomerResponse
+    Svc --> Ctrl : 2.1.3.3.2: ApiResponse.Ok(CustomerResponse)
+end
+deactivate Svc
+
+Ctrl --> Axios : 2.1.4: HTTP 200/404 + JSON
+deactivate Ctrl
+
+Axios --> APIClient : 2.1.5: res.data
+deactivate Axios
+
+APIClient --> UI : 2.1.6: ApiResponse<UserDetailDto>
+deactivate APIClient
+
+UI --> Admin : 2.1.7: Hien thi chi tiet khach hang
+deactivate UI
+
+== 3: Them khach hang moi (POST /api/Customers - [Authorize]) ==
+
+Admin -> UI : 3: Nhap form create va submit
+activate UI
+
+UI -> APIClient : 3.1: customerService.create(createCustomerDto)
+activate APIClient
+
+APIClient -> Axios : 3.1.1: api.post('/Customers', data)
+activate Axios
+
+Axios -> JWT : 3.1.2: HTTP POST /api/Customers + Bearer token
+activate JWT
+JWT -> Ctrl : 3.1.2.1: After JWT validation
+deactivate JWT
+
+activate Ctrl
+Ctrl -> Svc : 3.1.3: CreateAsync(createCustomerRequest)
+activate Svc
+
+Svc -> Svc : 3.1.3.1: AutoMapper.Map -> Customer
+Svc -> Svc : 3.1.3.2: Set CreatedAt = UtcNow
+
+Svc -> UoW : 3.1.3.3: Customers.AddAsync(customer)
+activate UoW
+UoW -> Repo : 3.1.3.3.1: AddAsync(Customer)
+activate Repo
+Repo -> DB : 3.1.3.3.2: INSERT INTO Customers (...)
+activate DB
+DB --> Repo : 3.1.3.3.3: Created
+deactivate DB
+deactivate Repo
+deactivate UoW
+
+Svc -> UoW : 3.1.3.4: SaveChangesAsync()
+activate UoW
+UoW -> DB : 3.1.3.4.1: COMMIT
+activate DB
+DB --> UoW : 3.1.3.4.2: success
+deactivate DB
+deactivate UoW
+
+Svc --> Ctrl : 3.1.3.5: ApiResponse.Ok("Customer created successfully")
+deactivate Svc
+
+Ctrl --> Axios : 3.1.4: HTTP 200 + JSON
+deactivate Ctrl
+
+Axios --> APIClient : 3.1.5: res.data
+deactivate Axios
+
+APIClient --> UI : 3.1.6: ApiResponse
+deactivate APIClient
+
+UI -> UI : 3.1.7: InvalidQuery: ['customers'] de refresh
+UI --> Admin : 3.1.8: Thong bao tao thanh cong
+deactivate UI
+
+== 4: Xoa mem khach hang (DELETE /api/Customers/{id} - [Authorize]) ==
+
+Admin -> UI : 4: Click nut Khoa/Xoa
+activate UI
+
+UI -> APIClient : 4.1: customerService.delete(id)
+activate APIClient
+
+APIClient -> Axios : 4.1.1: api.delete('/Customers/{id}')
+activate Axios
+
+Axios -> JWT : 4.1.2: HTTP DELETE + Bearer
+activate JWT
+JWT -> Ctrl : 4.1.2.1: After validation
+deactivate JWT
+
+activate Ctrl
+Ctrl -> Svc : 4.1.3: DeleteAsync(id)
+activate Svc
+
+Svc -> UoW : 4.1.3.1: Customers.GetByIdAsync(id)
+activate UoW
+UoW -> DB : 4.1.3.1.1: SELECT ... WHERE Id = {id}
+activate DB
+DB --> UoW : 4.1.3.1.2: Customer entity
+deactivate DB
+
+alt [4.1.3.2] Khong tim thay
+    Svc --> Ctrl : 4.1.3.2.1: ApiResponse.Fail("Customer not found", 404)
+else [4.1.3.3] Tim thay
+    Svc -> Svc : 4.1.3.3.1: Set IsDeleted=true, DeletedAt=UtcNow (soft delete)
+    UoW -> DB : 4.1.3.3.2: UPDATE Customers SET IsDeleted=true\nWHERE Id = {id}
+    activate DB
+    DB --> UoW : 4.1.3.3.3: updated
+    deactivate DB
+    deactivate UoW
+    
+    Svc -> UoW : 4.1.3.4: SaveChangesAsync()
+    activate UoW
+    UoW -> DB : 4.1.3.4.1: COMMIT
+    activate DB
+    DB --> UoW : 4.1.3.4.2: success
+    deactivate DB
+    deactivate UoW
+    
+    Svc --> Ctrl : 4.1.3.5: ApiResponse.Ok(true, "Customer deleted")
+end
+deactivate Svc
+
+Ctrl --> Axios : 4.1.4: HTTP 200 + JSON
+deactivate Ctrl
+
+Axios --> APIClient : 4.1.5: res.data
+deactivate Axios
+
+APIClient --> UI : 4.1.6: ApiResponse
+deactivate APIClient
+
+UI -> UI : 4.1.7: InvalidateQueries -> refresh list
+UI --> Admin : 4.1.8: Cap nhat trang thai bang
+deactivate UI
+
+@enduml

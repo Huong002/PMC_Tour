@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Core.DTOs.Request;
@@ -48,7 +49,24 @@ public class CustomersController : ControllerBase
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> Delete(int id)
     {
-        var result = await _customerService.DeleteAsync(id);
+        var currentUserId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
+        var result = await _customerService.DeleteAsync(id, currentUserId);
+        return StatusCode(result.StatusCode, result);
+    }
+
+    [HttpPatch("{id:int}/toggle-active")]
+    public async Task<IActionResult> ToggleActive(int id)
+    {
+        var currentUserId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
+        var result = await _customerService.ToggleActiveAsync(id, currentUserId);
+        return StatusCode(result.StatusCode, result);
+    }
+
+    [HttpGet("current")]
+    public async Task<IActionResult> GetCurrent()
+    {
+        var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+        var result = await _customerService.GetCurrentCustomerAsync(userId);
         return StatusCode(result.StatusCode, result);
     }
 }

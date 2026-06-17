@@ -17,6 +17,7 @@ public class Tour : BaseEntity
     public int MaxPeople { get; set; }
     public decimal? SalePrice { get; set; }
     public bool IsActive { get; set; } = true;
+    public Core.Enums.TourStatus Status { get; set; } = Core.Enums.TourStatus.Active;
     public bool IsFeatured { get; set; }
     public string? ShortDescription { get; set; }
     public string? Description { get; set; }

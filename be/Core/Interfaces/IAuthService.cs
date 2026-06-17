@@ -10,4 +10,5 @@ public interface IAuthService
     Task<ApiResponse<LoginResponse>> RegisterAsync(RegisterRequest request);
     Task<ApiResponse<LoginResponse>> RefreshTokenAsync(string refreshToken);
     Task<ApiResponse<bool>> ChangePasswordAsync(int userId, ChangePasswordRequest request);
+    Task<ApiResponse<bool>> UpdateProfileAsync(int userId, UpdateProfileRequest request);
 }

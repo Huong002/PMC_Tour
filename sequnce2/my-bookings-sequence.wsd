@@ -1,0 +1,158 @@
+@startuml
+skinparam backgroundColor #FEFEFE
+skinparam participantBackgroundColor Yellow
+skinparam participantBorderColor #B8860B
+skinparam actorBackgroundColor Yellow
+skinparam actorBorderColor #B8860B
+skinparam boundaryBackgroundColor Yellow
+skinparam boundaryBorderColor #B8860B
+skinparam controlBackgroundColor Yellow
+skinparam controlBorderColor #B8860B
+skinparam entityBackgroundColor Yellow
+skinparam entityBorderColor #B8860B
+skinparam databaseBackgroundColor Yellow
+skinparam databaseBorderColor #B8860B
+skinparam lifelineStrategy solid
+skinparam sequenceMessageAlign center
+
+actor "Khach hang\n(Customer)" as User #Yellow
+boundary "MyRegistrationsPage\n(Next.js Frontend)" as UI #Yellow
+boundary "AuthGuard" as AuthGuard #Yellow
+boundary "useAuth hook" as AuthHook #Yellow
+boundary "api.ts\n(Axios)" as Axios #Yellow
+control "JwtMiddleware" as JWT #Yellow
+control "BookingsController" as Ctrl #Yellow
+control "BookingService" as Svc #Yellow
+entity "UnitOfWork" as UoW #Yellow
+database "GenericRepository\nBooking" as Repo #Yellow
+database "GenericRepository\nCustomer" as RepoC #Yellow
+database "PostgreSQL" as DB #Yellow
+
+== 1: Xem danh sach booking cua toi (GET /api/Bookings/my - [Authorize]) ==
+
+User -> UI : 1: Mo trang My Bookings (/registrations/my)
+activate UI
+
+UI -> AuthGuard : 1.1: Kiem tra authentication
+activate AuthGuard
+alt [1.1.1] Chua dang nhap
+    AuthGuard --> UI : 1.1.1.1: Redirect /login
+else [1.1.2] Da dang nhap
+    AuthGuard --> UI : 1.1.2.1: Render
+end
+deactivate AuthGuard
+
+UI -> UI : 1.2: Render Navbar, Hero, danh sach booking
+
+UI -> AuthHook : 1.3: useAuth() lay user
+activate AuthHook
+AuthHook --> UI : 1.3.1: Tra ve user (co userId)
+deactivate AuthHook
+
+UI -> UI : 1.4: useQuery(['myRegistrations', userId])
+UI -> Axios : 1.5: api.get('/Bookings/my', { params: { PageSize: 50 } })
+activate Axios
+note right: Axios interceptor tu dong\nthem Bearer token
+
+Axios -> JWT : 1.6: HTTP GET /api/Bookings/my?PageSize=50
+activate JWT
+
+JWT -> JWT : 1.6.1: Doc & validate JWT token
+alt [1.6.2] Token hop le
+    JWT -> JWT : 1.6.2.1: Verify HMAC-SHA256, issuer, audience
+    JWT -> JWT : 1.6.2.2: Attach User vao HttpContext.Items
+else [1.6.3] Token khong hop le
+    note right: [Authorize] tra ve 401
+end
+JWT -> Ctrl : 1.6.4: Chuyen tiep request
+deactivate JWT
+
+activate Ctrl
+Ctrl -> Ctrl : 1.6.5: Lay userId tu claims: ClaimTypes.NameIdentifier
+Ctrl -> Svc : 1.6.6: GetMyBookingsAsync(userId, page=1, pageSize=50)
+activate Svc
+
+Svc -> RepoC : 1.6.6.1: Customers.FirstOrDefaultAsync(c => c.UserId == userId)
+activate RepoC
+RepoC -> DB : 1.6.6.1.1: SELECT ... FROM Customers WHERE UserId = {userId}
+activate DB
+DB --> RepoC : 1.6.6.1.2: Customer hoac null
+deactivate DB
+
+alt [1.6.6.2] Khong tim thay Customer
+    Svc --> Ctrl : 1.6.6.2.1: ApiResponse<PagedResult>(empty)
+else [1.6.6.3] Co Customer
+    deactivate RepoC
+
+    Svc -> UoW : 1.6.6.3.1: Bookings.GetQueryable()\n.Include(Customer)\n.Include(Tour)\n.Where(b => b.CustomerId == customer.Id)
+    activate UoW
+    UoW -> Repo : 1.6.6.3.2: IQueryable<Booking>
+    deactivate UoW
+
+    Repo -> Repo : 1.6.6.3.3: CountAsync()
+    Repo -> DB : 1.6.6.3.4: SELECT ... FROM Bookings b\nLEFT JOIN Customers c ON b.CustomerId = c.Id\nLEFT JOIN Tours t ON b.TourId = t.Id\nWHERE b.CustomerId = {customerId}\nORDER BY b.CreatedAt DESC\nOFFSET 0 LIMIT 50
+    activate DB
+    DB --> Repo : 1.6.6.3.5: List<Booking>
+    deactivate DB
+
+    Repo --> Svc : 1.6.6.3.6: List<Booking>
+    Svc -> Svc : 1.6.6.3.7: AutoMapper.Map -> List<BookingResponse>
+    Svc --> Ctrl : 1.6.6.3.8: ApiResponse<PagedResult<BookingResponse>>
+end
+deactivate Svc
+
+Ctrl --> Axios : 1.6.7: HTTP 200 + JSON
+deactivate Ctrl
+
+Axios --> UI : 1.6.8: res.data.data.items
+deactivate Axios
+
+UI -> UI : 1.6.9: Map bookings -> display format
+note right: Moi booking hien thi:\n- Ma booking (code)\n- Ten tour (tourName)\n- Ngay khoi hanh (startDate)\n- So khach (numAdults+numChildren)\n- Tong tien (finalPrice)\n- Trang thai (status badge)
+UI --> User : 1.6.10: Hien thi danh sach booking
+
+== 2: Xem chi tiet hoa don (Modal - Client side) ==
+
+User -> UI : 2: Click vao ma booking de xem hoa don
+activate UI
+
+UI -> UI : 2.1: setSelectedInvoice(booking)
+UI --> User : 2.2: Mo Modal "VIETTOUR RECEIPT"
+note right: Modal hien thi:\n- Ma hoa don (#booking.code)\n- Ngay khoi hanh\n- Ten tour\n- So khach\n- Phi dich vu 5%\n- Tong cong (finalPrice)\n- Trang thai hien tai
+deactivate UI
+
+== 3: Xem danh sach tours (public - GET /api/Tours) ==
+
+User -> UI : 3: Nhan "Kham Pha Tour" -> tours page
+activate UI
+
+UI -> Axios : 3.1: api.get('/Tours', { params: { Page: 1, PageSize: 50 } })
+activate Axios
+note right: Endpoint public - khong can token
+
+Axios -> Ctrl : 3.2: HTTP GET /api/Tours?Page=1&PageSize=50
+activate Ctrl
+note right: Khong co [Authorize] -\nJwtMiddleware van chay\nnhung co the khong co user
+
+Ctrl -> Svc : 3.3: GetAllAsync(filter)
+activate Svc
+
+Svc -> DB : 3.3.1: SELECT ... FROM Tours\nLEFT JOIN TourTypes\nLEFT JOIN TourImages\nWHERE IsActive=true\nORDER BY CreatedAt DESC\nOFFSET 0 LIMIT 50
+activate DB
+DB --> Svc : 3.3.2: List<Tour>
+deactivate DB
+
+Svc --> Ctrl : 3.3.3: ApiResponse<PagedResult<TourResponse>>
+deactivate Svc
+
+Ctrl --> Axios : 3.3.4: HTTP 200 + JSON
+deactivate Ctrl
+
+Axios --> UI : 3.3.5: res.data
+deactivate Axios
+
+UI -> UI : 3.3.6: Filter + render tour grid
+UI --> User : 3.3.7: Hien thi danh sach tours
+deactivate UI
+
+@enduml

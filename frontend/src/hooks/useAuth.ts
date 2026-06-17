@@ -7,6 +7,8 @@ type AuthUser = {
   userId: number;
   username: string;
   fullName: string;
+  email?: string;
+  phone?: string;
   role: string;
   roles: string[];
 };

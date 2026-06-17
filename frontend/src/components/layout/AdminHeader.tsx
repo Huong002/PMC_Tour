@@ -16,7 +16,7 @@ export function AdminHeader({
   description,
   searchTerm,
   onSearchChange,
-  searchPlaceholder = 'Search...',
+  searchPlaceholder = 'Tìm kiếm...',
   actionButton,
 }: AdminHeaderProps) {
   return (

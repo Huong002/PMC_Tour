@@ -3,12 +3,14 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Navbar } from '../../components/layout/Navbar';
+import { contactService } from '../../services/contact.service';
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    subject: 'General Inquiry',
+    phone: '',
+    subject: 'Yêu cầu chung',
     message: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -22,18 +24,19 @@ export default function ContactPage() {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      await contactService.create(formData);
       setIsSubmitting(false);
       setSubmitSuccess(true);
       setFormData({
         name: '',
         email: '',
-        subject: 'General Inquiry',
+        phone: '',
+        subject: 'Yêu cầu chung',
         message: ''
       });
 
@@ -41,7 +44,10 @@ export default function ContactPage() {
       setTimeout(() => {
         setSubmitSuccess(false);
       }, 3000);
-    }, 1500);
+    } catch (error: any) {
+      setIsSubmitting(false);
+      alert(error?.response?.data?.message || 'Có lỗi xảy ra khi gửi tin nhắn liên hệ. Vui lòng thử lại sau.');
+    }
   };
 
   return (
@@ -57,9 +63,9 @@ export default function ContactPage() {
             <div className="absolute bottom-0 right-0 w-80 h-80 bg-secondary-container rounded-full blur-[100px] translate-x-1/3 translate-y-1/3"></div>
           </div>
           <div className="relative z-10 px-margin-mobile md:px-margin-desktop max-w-max-width mx-auto text-center md:text-left">
-            <h1 className="font-display-lg text-display-lg md:text-display-lg text-on-primary mb-sm">Get in Touch</h1>
+            <h1 className="font-display-lg text-display-lg md:text-display-lg text-on-primary mb-sm">Liên hệ với chúng tôi</h1>
             <p className="font-body-lg text-body-lg text-on-primary/80 max-w-2xl">
-              We are here to help you plan your next unforgettable journey across Vietnam. Reach out to our travel experts for tailored experiences and dedicated support.
+              Chúng tôi luôn sẵn sàng hỗ trợ bạn lên kế hoạch cho hành trình đáng nhớ tiếp theo tại Việt Nam. Hãy liên hệ với các chuyên gia du lịch của chúng tôi để được tư vấn thiết kế trải nghiệm riêng biệt và hỗ trợ tận tâm.
             </p>
           </div>
         </header>
@@ -69,21 +75,34 @@ export default function ContactPage() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-gutter">
             {/* Contact Form Side */}
             <div className="lg:col-span-7 bg-surface-container-lowest rounded-xl shadow-natural p-md md:p-lg border border-outline-variant/30">
-              <h2 className="font-headline-md text-headline-md text-primary mb-lg">Send us a Message</h2>
+              <h2 className="font-headline-md text-headline-md text-primary mb-lg">Gửi Tin Nhắn Cho Chúng Tôi</h2>
               <form className="space-y-md" onSubmit={handleSubmit}>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-md">
                   <div className="space-y-xs">
-                    <label className="font-label-md text-label-md text-outline">Name</label>
+                    <label className="font-label-md text-label-md text-outline">Họ Tên</label>
                     <input
                       name="name"
                       value={formData.name}
                       onChange={handleChange}
                       className="w-full px-md py-3 rounded-lg border border-outline-variant bg-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all font-body-md"
-                      placeholder="Your full name"
+                      placeholder="Họ và tên của bạn"
                       required
                       type="text"
                     />
                   </div>
+                  <div className="space-y-xs">
+                    <label className="font-label-md text-label-md text-outline">Số điện thoại</label>
+                    <input
+                      name="phone"
+                      value={formData.phone}
+                      onChange={handleChange}
+                      className="w-full px-md py-3 rounded-lg border border-outline-variant bg-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all font-body-md"
+                      placeholder="Số điện thoại của bạn"
+                      type="text"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-md">
                   <div className="space-y-xs">
                     <label className="font-label-md text-label-md text-outline">Email</label>
                     <input
@@ -91,40 +110,40 @@ export default function ContactPage() {
                       value={formData.email}
                       onChange={handleChange}
                       className="w-full px-md py-3 rounded-lg border border-outline-variant bg-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all font-body-md"
-                      placeholder="your@email.com"
+                      placeholder="email@cua_ban.com"
                       required
                       type="email"
                     />
                   </div>
-                </div>
-                <div className="space-y-xs">
-                  <label className="font-label-md text-label-md text-outline">Subject</label>
-                  <div className="relative">
-                    <select
-                      name="subject"
-                      value={formData.subject}
-                      onChange={handleChange}
-                      className="w-full px-md py-3 rounded-lg border border-outline-variant bg-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all font-body-md appearance-none"
-                    >
-                      <option value="General Inquiry">General Inquiry</option>
-                      <option value="Tour Booking Support">Tour Booking Support</option>
-                      <option value="Partnership Opportunities">Partnership Opportunities</option>
-                      <option value="Custom Itinerary Request">Custom Itinerary Request</option>
-                      <option value="Feedback & Suggestions">Feedback & Suggestions</option>
-                    </select>
-                    <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-outline pointer-events-none">
-                      keyboard_arrow_down
-                    </span>
+                  <div className="space-y-xs">
+                    <label className="font-label-md text-label-md text-outline">Chủ đề</label>
+                    <div className="relative">
+                      <select
+                        name="subject"
+                        value={formData.subject}
+                        onChange={handleChange}
+                        className="w-full px-md py-3 rounded-lg border border-outline-variant bg-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all font-body-md appearance-none"
+                      >
+                        <option value="Yêu cầu chung">Yêu cầu chung</option>
+                        <option value="Hỗ trợ đặt tour">Hỗ trợ đặt tour</option>
+                        <option value="Cơ hội hợp tác">Cơ hội hợp tác</option>
+                        <option value="Yêu cầu lịch trình riêng">Yêu cầu lịch trình riêng</option>
+                        <option value="Phản hồi & Góp ý">Phản hồi & Góp ý</option>
+                      </select>
+                      <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-outline pointer-events-none">
+                        keyboard_arrow_down
+                      </span>
+                    </div>
                   </div>
                 </div>
                 <div className="space-y-xs">
-                  <label className="font-label-md text-label-md text-outline">Message</label>
+                  <label className="font-label-md text-label-md text-outline">Lời nhắn</label>
                   <textarea
                     name="message"
                     value={formData.message}
                     onChange={handleChange}
                     className="w-full px-md py-3 rounded-lg border border-outline-variant bg-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all font-body-md"
-                    placeholder="How can we help you explore Vietnam?"
+                    placeholder="Chúng tôi có thể giúp gì cho chuyến đi của bạn?"
                     required
                     rows={5}
                   ></textarea>
@@ -140,17 +159,17 @@ export default function ContactPage() {
                 >
                   {isSubmitting ? (
                     <>
-                      <span>Sending...</span>
+                      <span>Đang gửi...</span>
                       <span className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></span>
                     </>
                   ) : submitSuccess ? (
                     <>
-                      <span>Message Sent!</span>
+                      <span>Đã gửi lời nhắn!</span>
                       <span className="material-symbols-outlined">check_circle</span>
                     </>
                   ) : (
                     <>
-                      <span>Send Message</span>
+                      <span>Gửi lời nhắn</span>
                       <span className="material-symbols-outlined">send</span>
                     </>
                   )}
@@ -163,12 +182,12 @@ export default function ContactPage() {
               <div className="bg-primary text-on-primary rounded-xl shadow-natural p-lg">
                 <h3 className="font-title-lg text-title-lg mb-md flex items-center gap-sm">
                   <span className="material-symbols-outlined text-secondary-fixed">location_on</span>
-                  Headquarters
+                  Trụ sở chính
                 </h3>
                 <p className="font-body-md text-body-md opacity-90 leading-relaxed mb-base">
-                  Level 12, Lotte Center Hanoi,<br />
-                  54 Lieu Giai, Ba Dinh District,<br />
-                  Hanoi, Vietnam
+                  Tầng 12, Lotte Center Hà Nội,<br />
+                  54 Liễu Giai, Quận Ba Đình,<br />
+                  Hà Nội, Việt Nam
                 </p>
                 <div className="mt-lg pt-lg border-t border-on-primary/10 space-y-md">
                   <div className="flex items-center gap-md">
@@ -176,7 +195,7 @@ export default function ContactPage() {
                       <span className="material-symbols-outlined text-secondary-fixed">call</span>
                     </div>
                     <div>
-                      <p className="font-label-sm text-label-sm opacity-60">Phone Number</p>
+                      <p className="font-label-sm text-label-sm opacity-60">Số điện thoại</p>
                       <p className="font-label-md text-label-md font-bold">+84 (0) 24 3456 7890</p>
                     </div>
                   </div>
@@ -185,7 +204,7 @@ export default function ContactPage() {
                       <span className="material-symbols-outlined text-secondary-fixed">mail</span>
                     </div>
                     <div>
-                      <p className="font-label-sm text-label-sm opacity-60">Email Address</p>
+                      <p className="font-label-sm text-label-sm opacity-60">Địa chỉ email</p>
                       <p className="font-label-md text-label-md font-bold">contact@viettour.com.vn</p>
                     </div>
                   </div>
@@ -193,7 +212,7 @@ export default function ContactPage() {
               </div>
               {/* Socials & Office Hours */}
               <div className="bg-surface-container rounded-xl p-lg border border-outline-variant/30 flex-grow">
-                <h3 className="font-title-lg text-title-lg text-primary mb-md">Follow Our Journey</h3>
+                <h3 className="font-title-lg text-title-lg text-primary mb-md">Theo dõi hành trình của chúng tôi</h3>
                 <div className="flex gap-md mb-lg">
                   <Link className="w-12 h-12 rounded-lg bg-surface-container-highest flex items-center justify-center text-primary hover:bg-primary hover:text-on-primary transition-all" href="/contact">
                     <span className="material-symbols-outlined">public</span>
@@ -206,13 +225,13 @@ export default function ContactPage() {
                   </Link>
                 </div>
                 <div className="space-y-sm">
-                  <h4 className="font-label-md text-label-md font-bold text-on-surface">Operating Hours</h4>
+                  <h4 className="font-label-md text-label-md font-bold text-on-surface">Giờ làm việc</h4>
                   <div className="flex justify-between text-body-md text-on-surface-variant">
-                    <span>Mon - Fri</span>
+                    <span>Thứ 2 - Thứ 6</span>
                     <span className="font-medium text-on-surface">08:00 - 18:00</span>
                   </div>
                   <div className="flex justify-between text-body-md text-on-surface-variant">
-                    <span>Sat - Sun</span>
+                    <span>Thứ 7 - Chủ nhật</span>
                     <span className="font-medium text-on-surface">09:00 - 16:00</span>
                   </div>
                 </div>
@@ -231,15 +250,15 @@ export default function ContactPage() {
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent pointer-events-none"></div>
             <div className="absolute bottom-lg left-lg bg-surface p-md rounded-lg shadow-natural border border-outline-variant max-w-xs">
-              <p className="font-label-sm text-label-sm text-primary mb-xs">Find Us in Hanoi</p>
-              <p className="font-body-md text-body-md text-on-surface leading-tight">Lotte Center, 54 Lieu Giai, Ba Dinh District, Hanoi 100000</p>
+              <p className="font-label-sm text-label-sm text-primary mb-xs">Tìm chúng tôi ở Hà Nội</p>
+              <p className="font-body-md text-body-md text-on-surface leading-tight">Lotte Center, 54 Liễu Giai, Quận Ba Đình, Hà Nội 100000</p>
               <a
                 className="mt-md inline-flex items-center gap-xs text-secondary font-bold text-label-md hover:underline"
                 href="https://maps.google.com"
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                Get Directions <span className="material-symbols-outlined text-[18px]">open_in_new</span>
+                Chỉ đường <span className="material-symbols-outlined text-[18px]">open_in_new</span>
               </a>
             </div>
           </div>
@@ -249,51 +268,51 @@ export default function ContactPage() {
       {/* Footer */}
       <footer className="bg-inverse-surface dark:bg-surface-container-lowest full-width bottom-0 mt-xl">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-gutter px-margin-mobile md:px-margin-desktop py-xl w-full max-w-max-width mx-auto">
-          <div className="md:col-span-1">
+          <div className="md:col-span-1 text-left">
             <span className="font-headline-md text-headline-md text-surface-bright mb-md block">VietTour</span>
             <p className="font-body-md text-body-md text-surface-variant dark:text-on-surface-variant mb-lg pr-md">
-              Crafting extraordinary journeys across the heart of Vietnam with passion and local expertise since 2012.
+              Thiết kế những hành trình đặc biệt trên khắp Việt Nam với niềm đam mê và kinh nghiệm địa phương từ năm 2012.
             </p>
           </div>
-          <div className="space-y-md">
-            <h4 className="font-label-md text-label-md font-bold text-surface-bright">Quick Links</h4>
+          <div className="space-y-md text-left">
+            <h4 className="font-label-md text-label-md font-bold text-surface-bright">Liên kết nhanh</h4>
             <nav className="flex flex-col space-y-sm">
               <Link className="text-surface-variant dark:text-on-surface-variant hover:text-secondary-fixed-dim dark:hover:text-secondary transition-colors font-body-md" href="/about">
-                About Us
+                Về chúng tôi
               </Link>
               <Link className="text-surface-variant dark:text-on-surface-variant hover:text-secondary-fixed-dim dark:hover:text-secondary transition-colors font-body-md" href="/tours">
-                Tours
+                Tour du lịch
               </Link>
               <Link className="text-surface-variant dark:text-on-surface-variant hover:text-secondary-fixed-dim dark:hover:text-secondary transition-colors font-body-md" href="/tours">
-                Destinations
+                Điểm đến
               </Link>
               <Link className="text-surface-variant dark:text-on-surface-variant hover:text-secondary-fixed-dim dark:hover:text-secondary transition-colors font-body-md" href="/about">
-                Reviews
+                Đánh giá
               </Link>
             </nav>
           </div>
-          <div className="space-y-md">
-            <h4 className="font-label-md text-label-md font-bold text-surface-bright">Support</h4>
+          <div className="space-y-md text-left">
+            <h4 className="font-label-md text-label-md font-bold text-surface-bright">Hỗ trợ</h4>
             <nav className="flex flex-col space-y-sm">
               <Link className="text-surface-variant dark:text-on-surface-variant hover:text-secondary-fixed-dim dark:hover:text-secondary transition-colors font-body-md" href="/contact">
-                Help Center
+                Trung tâm trợ giúp
               </Link>
               <Link className="text-surface-variant dark:text-on-surface-variant hover:text-secondary-fixed-dim dark:hover:text-secondary transition-colors font-body-md" href="/tours">
-                Terms of Service
+                Điều khoản dịch vụ
               </Link>
               <Link className="text-surface-variant dark:text-on-surface-variant hover:text-secondary-fixed-dim dark:hover:text-secondary transition-colors font-body-md" href="/tours">
-                Privacy Policy
+                Chính sách bảo mật
               </Link>
               <Link className="text-secondary-fixed dark:text-secondary font-bold hover:text-secondary-fixed-dim dark:hover:text-secondary transition-colors font-body-md" href="/contact">
-                Contact
+                Liên hệ
               </Link>
             </nav>
           </div>
-          <div className="space-y-md">
-            <h4 className="font-label-md text-label-md font-bold text-surface-bright">Newsletter</h4>
-            <p className="font-body-md text-body-md text-surface-variant dark:text-on-surface-variant mb-md">Stay inspired with travel tips and exclusive deals.</p>
+          <div className="space-y-md text-left">
+            <h4 className="font-label-md text-label-md font-bold text-surface-bright">Bản tin</h4>
+            <p className="font-body-md text-body-md text-surface-variant dark:text-on-surface-variant mb-md">Luôn cập nhật các mẹo du lịch và ưu đãi độc quyền.</p>
             <div className="flex">
-              <input className="bg-surface-variant/10 border border-surface-variant/30 text-surface-bright rounded-l-lg px-md py-2 w-full focus:outline-none focus:border-secondary" placeholder="Email address" type="email" />
+              <input className="bg-surface-variant/10 border border-surface-variant/30 text-surface-bright rounded-l-lg px-md py-2 w-full focus:outline-none focus:border-secondary" placeholder="Địa chỉ email" type="email" />
               <button className="bg-secondary text-on-secondary px-md rounded-r-lg hover:bg-secondary-container transition-all">
                 <span className="material-symbols-outlined">chevron_right</span>
               </button>
@@ -301,7 +320,7 @@ export default function ContactPage() {
           </div>
         </div>
         <div className="border-t border-surface-variant/10 px-margin-mobile md:px-margin-desktop py-lg w-full max-w-max-width mx-auto flex flex-col md:flex-row justify-between items-center gap-md">
-          <p className="font-label-sm text-label-sm text-surface-variant dark:text-on-surface-variant">© 2024 VietTour. All rights reserved. Professional, Inviting, and Dynamic travel experiences.</p>
+          <p className="font-label-sm text-label-sm text-surface-variant dark:text-on-surface-variant">© 2024 VietTour. Bảo lưu mọi quyền. Trải nghiệm du lịch Chuyên nghiệp, Lôi cuốn và Năng động.</p>
           <div className="flex gap-md">
             <span className="material-symbols-outlined text-surface-variant/60 cursor-pointer hover:text-secondary-fixed transition-colors">payments</span>
             <span className="material-symbols-outlined text-surface-variant/60 cursor-pointer hover:text-secondary-fixed transition-colors">credit_card</span>

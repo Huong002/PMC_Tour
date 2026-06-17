@@ -24,7 +24,10 @@ public class DiscountService : IDiscountService
         var query = _unitOfWork.Discounts.GetQueryable().AsQueryable();
 
         if (!string.IsNullOrEmpty(request.SearchTerm))
-            query = query.Where(d => d.Code.Contains(request.SearchTerm));
+        {
+            var search = request.SearchTerm.ToLower();
+            query = query.Where(d => d.Code.ToLower().Contains(search));
+        }
 
         var total = await query.CountAsync();
         var items = await query.OrderByDescending(d => d.CreatedAt)

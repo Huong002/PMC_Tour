@@ -1,0 +1,346 @@
+@startuml
+skinparam backgroundColor #FEFEFE
+skinparam participantBackgroundColor Yellow
+skinparam participantBorderColor #B8860B
+skinparam actorBackgroundColor Yellow
+skinparam actorBorderColor #B8860B
+skinparam boundaryBackgroundColor Yellow
+skinparam boundaryBorderColor #B8860B
+skinparam controlBackgroundColor Yellow
+skinparam controlBorderColor #B8860B
+skinparam entityBackgroundColor Yellow
+skinparam entityBorderColor #B8860B
+skinparam databaseBackgroundColor Yellow
+skinparam databaseBorderColor #B8860B
+skinparam lifelineStrategy solid
+skinparam sequenceMessageAlign center
+skinparam sequenceReferenceAlign center
+
+actor "Admin/Staff" as Staff #Yellow
+boundary "ManageToursPage\n(Next.js Frontend)" as UI #Yellow
+boundary "AuthGuard\n(Auth Guard)" as AuthGuard #Yellow
+boundary "tourService\n(API Client)" as APIClient #Yellow
+boundary "api.ts\n(Axios Instance)" as Axios #Yellow
+control "JwtMiddleware" as JWT #Yellow
+control "ToursController" as Ctrl #Yellow
+control "TourService" as Svc #Yellow
+entity "UnitOfWork" as UoW #Yellow
+database "GenericRepository\nTour" as Repo #Yellow
+database "GenericRepository\nTourImage" as RepoImg #Yellow
+database "PostgreSQL\n(PMC_Tour)" as DB #Yellow
+
+== 1: Xem danh sach Tour (GET /api/Tours) ==
+
+Staff -> UI : 1: Mo trang Manage Tours (/tours/manage)
+activate UI
+
+UI -> AuthGuard : 1.1: Kiem tra authentication
+activate AuthGuard
+AuthGuard -> AuthGuard : 1.1.1: Kiem tra user && isLoading tu useAuth()
+alt [1.1.2] Chua dang nhap (user == null)
+    AuthGuard --> UI : 1.1.2.1: Redirect ve /login
+    UI --> Staff : 1.1.2.2: Hien thi trang login
+else [1.1.3] Khong co role phu hop
+    AuthGuard --> UI : 1.1.3.1: Redirect ve /
+else [1.1.4] Da xac thuc
+    AuthGuard --> UI : 1.1.4.1: Cho phep render children
+end
+deactivate AuthGuard
+
+UI -> APIClient : 1.2: tourService.getAll({ page, pageSize, searchTerm })
+activate APIClient
+
+APIClient -> Axios : 1.2.1: api.get('/Tours', { params })
+activate Axios
+note right: Axios interceptor tu dong them\nAuthorization: Bearer {token}\ntu localStorage
+Axios -> JWT : 1.2.2: HTTP GET /api/Tours?Page=1&PageSize=10
+activate JWT
+
+JWT -> JWT : 1.2.2.1: Doc token tu header Authorization
+alt [1.2.2.2] Token hop le
+    JWT -> JWT : 1.2.2.2.1: Validate JWT (signature, issuer, audience, expiry)
+    JWT -> JWT : 1.2.2.2.2: Giai ma claims (NameIdentifier, Role)
+    note right: Su dung SymmetricSecurityKey\nvoi thuat toan HMACSHA256
+    JWT -> JWT : 1.2.2.2.3: Attach User entity vao HttpContext.Items["User"]
+else [1.2.2.3] Token khong hop le hoac thieu
+    note right: Exception duoc silent catch,\nrequest tiep tuc khong co user
+end
+JWT -> Ctrl : 1.2.2.4: Chuyen tiep request
+deactivate JWT
+
+activate Ctrl
+Ctrl -> Svc : 1.2.3: GetAllAsync(filter)
+activate Svc
+
+Svc -> UoW : 1.2.3.1: Tours.GetQueryable()
+activate UoW
+UoW -> Repo : 1.2.3.1.1: GetQueryable() -> IQueryable<Tour>
+deactivate UoW
+
+note right: Query duoc xay dung\nvoi Include: TourType, Images
+
+Repo -> Repo : 1.2.3.2: Query filters (TourTypeId, SearchTerm,\nPriceMin/Max, DurationDays, IsActive, IsFeatured)
+Repo -> Repo : 1.2.3.3: Dem total count: query.CountAsync()
+
+Repo -> DB : 1.2.3.4: SELECT ... FROM Tours\nLEFT JOIN TourTypes\nLEFT JOIN TourImages\nWHERE ... \nORDER BY CreatedAt DESC\nOFFSET ... LIMIT ...
+activate DB
+DB --> Repo : 1.2.3.4.1: List<Tour> + total count
+deactivate DB
+
+Repo --> Svc : 1.2.3.5: List<Tour>
+Svc -> Svc : 1.2.3.6: AutoMapper.Map -> List<TourResponse>
+Svc --> Ctrl : 1.2.3.7: ApiResponse<PagedResult<TourResponse>>
+deactivate Svc
+
+Ctrl --> Axios : 1.2.4: HTTP 200 + JSON (PagedResult)
+deactivate Ctrl
+
+Axios --> APIClient : 1.2.5: res.data (ApiResponse)
+deactivate Axios
+
+APIClient --> UI : 1.2.6: ApiResponse<PagedResult<TourDto>>
+deactivate APIClient
+
+UI -> UI : 1.2.7: Render table + stats + filters
+UI --> Staff : 1.2.8: Hien thi danh sach Tour
+deactivate UI
+
+== 2: Tao Tour moi (POST /api/Tours - [Authorize]) ==
+
+Staff -> UI : 2: Nhap form tao Tour va submit
+activate UI
+
+UI -> UI : 2.1: Validate form fields (frontend)
+UI -> APIClient : 2.2: tourService.create(createTourRequest)
+activate APIClient
+
+APIClient -> Axios : 2.2.1: api.post('/Tours', data)
+activate Axios
+
+Axios -> JWT : 2.2.2: HTTP POST /api/Tours + Bearer token
+activate JWT
+
+JWT -> JWT : 2.2.2.1: Validate token (signature, issuer, audience, expiry)
+alt [2.2.2.2] Token hop le
+    JWT -> JWT : 2.2.2.2.1: Attach User vao context
+else [2.2.2.3] Token khong hop le
+    note right: [Authorize] attribute se tra ve 401
+end
+JWT -> Ctrl : 2.2.2.4: Chuyen tiep request
+deactivate JWT
+
+activate Ctrl
+Ctrl -> Ctrl : 2.2.3: [Authorize] kiem tra roles
+note right: [Authorize] mac dinh yeu cau\nxac thuc, role check tuy chinh
+
+Ctrl -> Ctrl : 2.2.4: Lay userId tu claims: User.FindFirst(NameIdentifier)
+Ctrl -> Svc : 2.2.5: CreateAsync(request, userId)
+activate Svc
+
+Svc -> Svc : 2.2.5.1: AutoMapper.Map<CreateTourRequest -> Tour>
+Svc -> Svc : 2.2.5.2: Set CreatedBy = userId, CreatedAt = UtcNow, IsActive = true
+
+Svc -> UoW : 2.2.5.3: Tours.AddAsync(tour)
+activate UoW
+UoW -> Repo : 2.2.5.3.1: AddAsync(Tour)
+activate Repo
+Repo -> DB : 2.2.5.3.2: INSERT INTO Tours (...)
+activate DB
+DB --> Repo : 2.2.5.3.3: Tour duoc tao (co Id)
+deactivate DB
+Repo --> UoW : 2.2.5.3.4: Tour entity
+deactivate Repo
+deactivate UoW
+
+Svc -> UoW : 2.2.5.4: SaveChangesAsync()
+activate UoW
+UoW -> DB : 2.2.5.4.1: COMMIT transaction
+activate DB
+DB --> UoW : 2.2.5.4.2: success
+deactivate DB
+deactivate UoW
+
+Svc -> Svc : 2.2.5.5: GetByIdAsync(tour.Id) de lay du lieu day du
+Svc --> Ctrl : 2.2.5.6: ApiResponse<TourResponse> "Tour created successfully"
+deactivate Svc
+
+Ctrl --> Axios : 2.2.6: HTTP 200 + JSON (TourResponse)
+deactivate Ctrl
+
+Axios --> APIClient : 2.2.7: res.data
+deactivate Axios
+
+APIClient --> UI : 2.2.8: ApiResponse<TourDto>
+deactivate APIClient
+
+UI -> UI : 2.2.9: Toast success + refresh danh sach
+UI --> Staff : 2.2.10: Thong bao tao tour thanh cong
+deactivate UI
+
+== 3: Cap nhat Tour (PUT /api/Tours/{id} - [Authorize]) ==
+
+Staff -> UI : 3: Chinh sua Tour va luu
+activate UI
+
+UI -> APIClient : 3.1: tourService.update(id, updateTourRequest)
+activate APIClient
+
+APIClient -> Axios : 3.1.1: api.put('/Tours/{id}', data)
+activate Axios
+
+Axios -> JWT : 3.1.2: HTTP PUT /api/Tours/{id} + Bearer token
+activate JWT
+
+JWT -> JWT : 3.1.2.1: Validate JWT token
+JWT -> Ctrl : 3.1.2.2: Chuyen tiep request
+deactivate JWT
+
+activate Ctrl
+Ctrl -> Svc : 3.1.3: UpdateAsync(id, request, userId)
+activate Svc
+
+Svc -> UoW : 3.1.3.1: Tours.GetByIdAsync(id)
+activate UoW
+UoW -> DB : 3.1.3.1.1: SELECT ... FROM Tours WHERE Id = {id}
+activate DB
+DB --> UoW : 3.1.3.1.2: Tour entity hoac null
+deactivate DB
+deactivate UoW
+
+alt [3.1.3.2] Tour khong ton tai
+    Svc --> Ctrl : 3.1.3.2.1: ApiResponse.Fail("Tour not found", 404)
+else [3.1.3.3] Tour ton tai
+    Svc -> Svc : 3.1.3.3.1: AutoMapper.Map(request -> tour) (cap nhat cac field)
+    Svc -> Svc : 3.1.3.3.2: Set UpdatedBy = userId, UpdatedAt = UtcNow
+    
+    alt [3.1.3.4] Co ImageUrls trong request
+        Svc -> UoW : 3.1.3.4.1: TourImages.GetQueryable() where TourId == id
+        activate UoW
+        UoW -> DB : 3.1.3.4.1.1: SELECT ... FROM TourImages WHERE TourId = {id}
+        activate DB
+        DB --> UoW : 3.1.3.4.1.2: List<TourImage> (anh cu)
+        deactivate DB
+        
+        loop Voi moi anh cu
+            UoW -> RepoImg : 3.1.3.4.2: DeleteAsync(oldImage)
+            activate RepoImg
+            RepoImg -> DB : 3.1.3.4.2.1: DELETE FROM TourImages WHERE Id = {id}
+            activate DB
+            DB --> RepoImg : 3.1.3.4.2.2: deleted
+            deactivate DB
+            deactivate RepoImg
+        end
+        
+        loop Voi moi ImageUrl moi
+            UoW -> RepoImg : 3.1.3.4.3: AddAsync(new TourImage { ... })
+            activate RepoImg
+            RepoImg -> DB : 3.1.3.4.3.1: INSERT INTO TourImages (...)
+            activate DB
+            DB --> RepoImg : 3.1.3.4.3.2: created
+            deactivate DB
+            deactivate RepoImg
+        end
+        deactivate UoW
+    end
+    
+    Svc -> UoW : 3.1.3.5: Tours.UpdateAsync(tour)
+    activate UoW
+    UoW -> DB : 3.1.3.5.1: UPDATE Tours SET ... WHERE Id = {id}
+    activate DB
+    DB --> UoW : 3.1.3.5.2: updated
+    deactivate DB
+    deactivate UoW
+    
+    Svc -> UoW : 3.1.3.6: SaveChangesAsync()
+    activate UoW
+    UoW -> DB : 3.1.3.6.1: COMMIT transaction
+    activate DB
+    DB --> UoW : 3.1.3.6.2: success
+    deactivate DB
+    deactivate UoW
+    
+    Svc -> Svc : 3.1.3.7: GetByIdAsync(tour.Id)
+    Svc --> Ctrl : 3.1.3.8: ApiResponse<TourResponse> "Tour updated successfully"
+end
+deactivate Svc
+
+Ctrl --> Axios : 3.1.4: HTTP 200 + JSON
+deactivate Ctrl
+
+Axios --> APIClient : 3.1.5: res.data
+deactivate Axios
+
+APIClient --> UI : 3.1.6: ApiResponse<TourDto>
+deactivate APIClient
+
+UI --> Staff : 3.1.7: Thong bao cap nhat thanh cong
+deactivate UI
+
+== 4: Xoa Tour (DELETE /api/Tours/{id} - [Authorize]) ==
+
+Staff -> UI : 4: Nhan nut Archive (Xoa mem)
+activate UI
+
+UI -> UI : 4.1: Update local state: status = "Archived" (optimistic)
+UI --> Staff : 4.1.1: Hien thi trang thai moi ngay lap tuc
+
+UI -> APIClient : 4.2: tourService.delete(id)
+activate APIClient
+
+APIClient -> Axios : 4.2.1: api.delete('/Tours/{id}')
+activate Axios
+
+Axios -> JWT : 4.2.2: HTTP DELETE /api/Tours/{id} + Bearer token
+activate JWT
+JWT -> Ctrl : 4.2.2.1: Chuyen tiep sau khi validate token
+deactivate JWT
+
+activate Ctrl
+Ctrl -> Svc : 4.2.3: DeleteAsync(id)
+activate Svc
+
+Svc -> UoW : 4.2.3.1: Tours.GetByIdAsync(id)
+activate UoW
+UoW -> DB : 4.2.3.1.1: SELECT ... FROM Tours WHERE Id = {id}
+activate DB
+DB --> UoW : 4.2.3.1.2: Tour entity
+deactivate DB
+deactivate UoW
+
+alt [4.2.3.2] Tour khong ton tai
+    Svc --> Ctrl : 4.2.3.2.1: ApiResponse.Fail("Tour not found", 404)
+else [4.2.3.3] Tour ton tai
+    Svc -> Svc : 4.2.3.3.1: Set IsDeleted = true, DeletedAt = UtcNow (soft delete)
+    Svc -> UoW : 4.2.3.3.2: Tours.UpdateAsync(tour)
+    activate UoW
+    UoW -> DB : 4.2.3.3.2.1: UPDATE Tours SET IsDeleted=true, DeletedAt=... WHERE Id={id}
+    activate DB
+    DB --> UoW : 4.2.3.3.2.2: updated
+    deactivate DB
+    deactivate UoW
+    
+    Svc -> UoW : 4.2.3.4: SaveChangesAsync()
+    activate UoW
+    UoW -> DB : 4.2.3.4.1: COMMIT
+    activate DB
+    DB --> UoW : 4.2.3.4.2: success
+    deactivate DB
+    deactivate UoW
+    
+    Svc --> Ctrl : 4.2.3.5: ApiResponse<bool>.Ok(true, "Tour deleted successfully")
+end
+deactivate Svc
+
+Ctrl --> Axios : 4.2.4: HTTP 200 + JSON
+deactivate Ctrl
+
+Axios --> APIClient : 4.2.5: res.data
+deactivate Axios
+
+APIClient --> UI : 4.2.6: ApiResponse
+deactivate APIClient
+
+UI --> Staff : 4.2.7: Xac nhan xoa thanh cong
+deactivate UI
+
+@enduml

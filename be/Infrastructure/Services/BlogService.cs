@@ -24,7 +24,10 @@ public class BlogService : IBlogService
         var query = _unitOfWork.Blogs.GetQueryable().AsQueryable();
 
         if (!string.IsNullOrEmpty(request.SearchTerm))
-            query = query.Where(b => b.Title.Contains(request.SearchTerm));
+        {
+            var search = request.SearchTerm.ToLower();
+            query = query.Where(b => b.Title.ToLower().Contains(search));
+        }
 
         var total = await query.CountAsync();
         var items = await query.OrderByDescending(b => b.PublishedAt ?? b.CreatedAt)

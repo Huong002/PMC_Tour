@@ -1,0 +1,54 @@
+@startuml
+skinparam participantBackgroundColor Yellow
+skinparam lifelineStrategy solid
+
+actor "Người dùng" as User #Yellow
+boundary "TourDetailPage" as UI #Yellow
+boundary "AxiosClient" as API #Yellow
+control "ToursController" as Ctrl #Yellow
+control "TourService" as Svc #Yellow
+entity "Tour" as TEnt #Yellow
+entity "TourType" as TTEnt #Yellow
+entity "TourImage" as TIEnt #Yellow
+entity "Itinerary" as IEnt #Yellow
+entity "Review" as REnt #Yellow
+database "PostgreSQL" as DB #Yellow
+
+User -> UI : 1: Truy cập URL thân thiện\n/tours/slug/{slug}
+activate UI
+UI -> UI : 1.1: Lấy slug từ route params
+UI -> API : 1.2: GET /api/Tours/slug/{slug}
+activate API
+API -> Ctrl : 1.3: Chuyển tiếp request
+activate Ctrl
+Ctrl -> Svc : 1.4: GetBySlugAsync(slug)
+activate Svc
+
+Svc -> DB : 1.5: Tours.GetQueryable()\n.Include(t => t.TourType)\n.Include(t => t.Images)\n.Include(t => t.Itineraries\n    .OrderBy(i => i.DayNumber))\n.Include(t => t.Reviews)\n.FirstOrDefaultAsync(t => t.Slug == slug)
+activate DB
+
+alt 1.6: [Tour không tồn tại]
+DB --> Svc : 1.6.1: null
+deactivate DB
+Svc --> Ctrl : 1.6.2: ApiResponse<TourResponse>.Fail(\n"Tour not found", 404)
+Ctrl --> API : 1.6.3: StatusCode(404)
+API --> UI : 1.6.4: Response lỗi
+UI --> User : 1.6.5: Hiển thị "Tour not found"
+else 1.7: [Tour tồn tại]
+DB --> Svc : 1.7.1: Tour (có TourType, Images,\nItineraries, Reviews)
+deactivate DB
+Svc -> Svc : 1.7.2: _mapper.Map<TourResponse>(tour)
+Svc --> Ctrl : 1.7.3: ApiResponse<TourResponse>.Ok(data)
+end
+
+deactivate Svc
+Ctrl --> API : 1.8: StatusCode(200, ApiResponse<TourResponse>)
+deactivate Ctrl
+API --> UI : 1.9: Response JSON
+deactivate API
+
+UI -> UI : 1.10: Hiển thị chi tiết tour\n(SEO-friendly URL: slug thay vì id)
+UI --> User : 1.11: Xem thông tin đầy đủ
+deactivate UI
+
+@enduml

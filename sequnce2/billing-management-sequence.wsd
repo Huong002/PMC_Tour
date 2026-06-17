@@ -1,0 +1,352 @@
+@startuml
+skinparam backgroundColor #FEFEFE
+skinparam participantBackgroundColor Yellow
+skinparam participantBorderColor #B8860B
+skinparam actorBackgroundColor Yellow
+skinparam actorBorderColor #B8860B
+skinparam boundaryBackgroundColor Yellow
+skinparam boundaryBorderColor #B8860B
+skinparam controlBackgroundColor Yellow
+skinparam controlBorderColor #B8860B
+skinparam entityBackgroundColor Yellow
+skinparam entityBorderColor #B8860B
+skinparam databaseBackgroundColor Yellow
+skinparam databaseBorderColor #B8860B
+skinparam lifelineStrategy solid
+skinparam sequenceMessageAlign center
+
+actor "Admin/Staff" as Staff #Yellow
+boundary "BookingPage\n(Next.js Frontend)" as UI #Yellow
+boundary "AuthGuard" as AuthGuard #Yellow
+boundary "bookingService\n(API Client)" as APIClient #Yellow
+boundary "api.ts\n(Axios)" as Axios #Yellow
+control "JwtMiddleware" as JWT #Yellow
+control "BookingsController" as Ctrl #Yellow
+control "BookingService" as Svc #Yellow
+entity "UnitOfWork" as UoW #Yellow
+database "GenericRepository\nBooking" as RepoB #Yellow
+database "GenericRepository\nTour" as RepoT #Yellow
+database "GenericRepository\nCustomer" as RepoC #Yellow
+database "GenericRepository\nPayment" as RepoP #Yellow
+database "GenericRepository\nBookingDetail" as RepoD #Yellow
+database "PostgreSQL" as DB #Yellow
+
+== 1: Xem danh sach hoa don/dat tour (GET /api/Bookings - [Authorize]) ==
+
+Staff -> UI : 1: Mo trang quan ly Booking
+activate UI
+
+UI -> AuthGuard : 1.1: Kiem tra authentication
+activate AuthGuard
+alt [1.1.1] Chua dang nhap
+    AuthGuard --> UI : 1.1.1.1: Redirect /login
+else [1.1.2] Da xac thuc
+    AuthGuard --> UI : 1.1.2.1: Render
+end
+deactivate AuthGuard
+
+UI -> APIClient : 1.2: bookingService.getAll(filter)
+activate APIClient
+
+APIClient -> Axios : 1.2.1: api.get('/Bookings', { params })
+activate Axios
+
+Axios -> JWT : 1.2.2: HTTP GET /api/Bookings?Page=1&PageSize=10
+activate JWT
+
+JWT -> JWT : 1.2.2.1: Validate JWT token
+alt [1.2.2.2] Token hop le
+    JWT -> JWT : 1.2.2.2.1: Attach User to context
+else [1.2.2.3] Token khong hop le
+    note right: [Authorize] -> 401
+end
+JWT -> Ctrl : 1.2.2.4: Chuyen tiep
+deactivate JWT
+
+activate Ctrl
+Ctrl -> Svc : 1.2.3: GetAllAsync(filter)
+activate Svc
+
+Svc -> UoW : 1.2.3.1: Bookings.GetQueryable()\n.Include(Customer).Include(Tour)
+activate UoW
+UoW -> RepoB : 1.2.3.1.1: IQueryable<Booking>
+deactivate UoW
+
+RepoB -> RepoB : 1.2.3.2: Loc theo filter (BookingCode,\nCustomerId, TourId, Status, StartDate, EndDate)
+RepoB -> RepoB : 1.2.3.3: CountAsync()
+
+RepoB -> DB : 1.2.3.4: SELECT ... FROM Bookings\nLEFT JOIN Customers\nLEFT JOIN Tours\nWHERE ...\nORDER BY CreatedAt DESC\nOFFSET ... LIMIT ...
+activate DB
+DB --> RepoB : 1.2.3.4.1: List<Booking>
+deactivate DB
+
+RepoB --> Svc : 1.2.3.5: List<Booking>
+Svc -> Svc : 1.2.3.6: AutoMapper.Map -> List<BookingResponse>
+Svc --> Ctrl : 1.2.3.7: ApiResponse<PagedResult<BookingResponse>>
+deactivate Svc
+
+Ctrl --> Axios : 1.2.4: HTTP 200 + JSON
+deactivate Ctrl
+
+Axios --> APIClient : 1.2.5: res.data
+deactivate Axios
+
+APIClient --> UI : 1.2.6: Data
+deactivate APIClient
+
+UI --> Staff : 1.2.7: Hien thi danh sach booking + gia
+deactivate UI
+
+== 2: Xem chi tiet hoa don (GET /api/Bookings/{id} - [Authorize]) ==
+
+Staff -> UI : 2: Click xem chi tiet booking
+activate UI
+
+UI -> APIClient : 2.1: bookingService.getById(id)
+activate APIClient
+
+APIClient -> Axios : 2.1.1: api.get('/Bookings/{id}')
+activate Axios
+
+Axios -> JWT : 2.1.2: HTTP GET + Bearer
+activate JWT
+JWT -> Ctrl : 2.1.2.1: Validate token
+deactivate JWT
+
+activate Ctrl
+Ctrl -> Svc : 2.1.3: GetByIdAsync(id)
+activate Svc
+
+Svc -> UoW : 2.1.3.1: Bookings.GetQueryable()\n.Include(Customer)\n.Include(Tour)\n.Include(BookingDetails)\n.Include(Payments)\n.Include(Discount)
+activate UoW
+
+UoW -> DB : 2.1.3.1.1: SELECT ... FROM Bookings b\nLEFT JOIN Customers c ON b.CustomerId = c.Id\nLEFT JOIN Tours t ON b.TourId = t.Id\nLEFT JOIN BookingDetails d ON d.BookingId = b.Id\nLEFT JOIN Payments p ON p.BookingId = b.Id\nLEFT JOIN Discounts dsc ON dsc.Id = b.DiscountId\nWHERE b.Id = {id}
+activate DB
+DB --> UoW : 2.1.3.1.2: Booking + Customer + Tour +\nBookingDetails + Payments + Discount
+deactivate DB
+deactivate UoW
+
+alt [2.1.3.2] Khong tim thay
+    Svc --> Ctrl : 2.1.3.2.1: ApiResponse.Fail("Booking not found", 404)
+else [2.1.3.3] Tim thay
+    note right: BookingResponse chua:\n- TotalPrice, DiscountAmount, FinalPrice\n- Status (Pending/Confirmed/...)\n- Payments (TransactionId, Amount,\n  PaymentMethod, Status)\n- BookingDetails
+    Svc -> Svc : 2.1.3.3.1: AutoMapper.Map -> BookingResponse
+    Svc --> Ctrl : 2.1.3.3.2: ApiResponse.Ok(BookingResponse)
+end
+deactivate Svc
+
+Ctrl --> Axios : 2.1.4: HTTP 200/404
+deactivate Ctrl
+
+Axios --> APIClient : 2.1.5: res.data
+deactivate Axios
+
+APIClient --> UI : 2.1.6: ApiResponse<BookingDetailDto>
+deactivate APIClient
+
+UI --> Staff : 2.1.7: Hien thi chi tiet hoa don\n(gom tour, khach, gia, thanh toan)
+deactivate UI
+
+== 3: Tao booking moi (POST /api/Bookings - [Authorize]) ==
+
+Staff -> UI : 3: Nhap form dat tour va submit
+activate UI
+
+UI -> UI : 3.1: Validate frontend (so luong, ngay)
+UI -> APIClient : 3.2: bookingService.create(createData)
+activate APIClient
+
+APIClient -> Axios : 3.2.1: api.post('/Bookings', data)
+activate Axios
+
+Axios -> JWT : 3.2.2: HTTP POST /api/Bookings + Bearer
+activate JWT
+JWT -> Ctrl : 3.2.2.1: Validate token
+deactivate JWT
+
+activate Ctrl
+Ctrl -> Ctrl : 3.2.3: Lay userId tu claims (NameIdentifier)
+Ctrl -> Svc : 3.2.4: CreateAsync(request, userId)
+activate Svc
+
+Svc -> RepoT : 3.2.4.1: Tours.GetByIdAsync(request.TourId)
+activate RepoT
+RepoT -> DB : 3.2.4.1.1: SELECT ... WHERE Id = {tourId}
+activate DB
+DB --> RepoT : 3.2.4.1.2: Tour entity
+deactivate DB
+deactivate RepoT
+
+alt [3.2.4.2] Tour khong ton tai
+    Svc --> Ctrl : 3.2.4.2.1: ApiResponse.Fail("Tour not found", 404)
+else
+
+Svc -> RepoC : 3.2.4.3: Customers.GetByIdAsync(request.CustomerId)
+activate RepoC
+RepoC -> DB : 3.2.4.3.1: SELECT ... WHERE Id = {customerId}
+activate DB
+DB --> RepoC : 3.2.4.3.2: Customer entity
+deactivate DB
+deactivate RepoC
+
+alt [3.2.4.4] Khach hang khong ton tai
+    Svc --> Ctrl : 3.2.4.4.1: ApiResponse.Fail("Customer not found", 404)
+else
+
+Svc -> Svc : 3.2.4.5: Tinh toan gia
+note right: TotalPrice = (NumAdults * PriceAdult)\n+ (NumChildren * PriceChild)\nFinalPrice = TotalPrice - DiscountAmount
+Svc -> Svc : 3.2.4.6: GenerateBookingCode()\nformat: BK{yyyyMMdd}{random}
+
+Svc -> UoW : 3.2.4.7: Bookings.AddAsync(booking)
+activate UoW
+
+loop 3.2.4.8: Neu co BookingDetail
+    UoW -> RepoD : 3.2.4.8.1: Add BookingDetail\n(FullName, PassportNumber, Note)
+    activate RepoD
+    RepoD -> DB : 3.2.4.8.2: INSERT INTO BookingDetails
+    activate DB
+    DB --> RepoD : 3.2.4.8.3: created
+    deactivate DB
+    deactivate RepoD
+end
+
+UoW -> RepoB : 3.2.4.9: AddAsync(Booking)
+activate RepoB
+RepoB -> DB : 3.2.4.9.1: INSERT INTO Bookings\n(BookingCode, CustomerId, TourId,\nStartDate, EndDate, NumAdults,\nNumChildren, TotalPrice, FinalPrice,\nStatus=Pending, CreatedBy)
+activate DB
+DB --> RepoB : 3.2.4.9.2: Booking created
+deactivate DB
+deactivate RepoB
+
+UoW -> DB : 3.2.4.10: SaveChanges() -> COMMIT
+activate DB
+DB --> UoW : 3.2.4.10.1: success
+deactivate DB
+deactivate UoW
+
+Svc -> Svc : 3.2.4.11: GetByIdAsync(booking.Id) de lay day du
+Svc --> Ctrl : 3.2.4.12: ApiResponse.Ok("Booking created")
+end
+end
+deactivate Svc
+
+Ctrl --> Axios : 3.2.5: HTTP 200 + JSON
+deactivate Ctrl
+
+Axios --> APIClient : 3.2.6: res.data
+deactivate Axios
+
+APIClient --> UI : 3.2.7: ApiResponse
+deactivate APIClient
+
+UI --> Staff : 3.2.8: Thong bao tao booking thanh cong
+deactivate UI
+
+== 4: Cap nhat trang thai booking (PUT /api/Bookings/{id}/status - [Authorize]) ==
+
+Staff -> UI : 4: Thay doi trang thai booking
+activate UI
+
+UI -> APIClient : 4.1: bookingService.updateStatus(id, statusEnum)
+activate APIClient
+
+APIClient -> Axios : 4.1.1: api.put('/Bookings/{id}/status', status)
+activate Axios
+
+Axios -> JWT : 4.1.2: HTTP PUT + Bearer
+activate JWT
+JWT -> Ctrl : 4.1.2.1: Validate token
+deactivate JWT
+
+activate Ctrl
+Ctrl -> Svc : 4.1.3: UpdateStatusAsync(id, status, userId)
+activate Svc
+
+Svc -> UoW : 4.1.3.1: Bookings.GetByIdAsync(id)
+activate UoW
+UoW -> DB : 4.1.3.1.1: SELECT ... WHERE Id = {id}
+activate DB
+DB --> UoW : 4.1.3.1.2: Booking entity
+deactivate DB
+
+alt [4.1.3.2] Khong tim thay
+    Svc --> Ctrl : 4.1.3.2.1: ApiResponse.Fail("Booking not found", 404)
+else [4.1.3.3] Tim thay
+    Svc -> Svc : 4.1.3.3.1: booking.Status = status (Pending=0,\n  Confirmed=1, InProgress=2,\n  Completed=3, Cancelled=4, Refunded=5)
+    Svc -> Svc : 4.1.3.3.2: booking.UpdatedBy = userId
+    
+    UoW -> DB : 4.1.3.3.3: UPDATE Bookings SET Status = {status},\nUpdatedBy = {userId}, UpdatedAt = UtcNow\nWHERE Id = {id}
+    activate DB
+    DB --> UoW : 4.1.3.3.4: updated
+    deactivate DB
+    deactivate UoW
+    
+    Svc -> UoW : 4.1.3.4: SaveChangesAsync()
+    activate UoW
+    UoW -> DB : 4.1.3.4.1: COMMIT
+    activate DB
+    DB --> UoW : 4.1.3.4.2: success
+    deactivate DB
+    deactivate UoW
+    
+    Svc -> Svc : 4.1.3.5: GetByIdAsync(id)
+    Svc --> Ctrl : 4.1.3.6: ApiResponse.Ok("Booking status updated")
+end
+deactivate Svc
+
+Ctrl --> Axios : 4.1.4: HTTP 200
+deactivate Ctrl
+
+Axios --> APIClient : 4.1.5: res.data
+deactivate Axios
+
+APIClient --> UI : 4.1.6: ApiResponse
+deactivate APIClient
+
+UI --> Staff : 4.1.7: Thong bao cap nhat trang thai
+deactivate UI
+
+== 5: Xem thong ke doanh thu (GET /api/Dashboard/stats - [Authorize]) ==
+
+Staff -> UI : 5: Mo Dashboard
+activate UI
+
+UI -> APIClient : 5.1: api.get('/Dashboard/stats')
+activate APIClient
+
+APIClient -> Axios : 5.1.1: api.get('/Dashboard/stats')
+activate Axios
+
+Axios -> JWT : 5.1.2: HTTP GET + Bearer
+activate JWT
+JWT -> Ctrl : 5.1.2.1: Validate token
+deactivate JWT
+
+activate Ctrl
+Ctrl -> Svc : 5.1.3: GetStatsAsync()
+activate Svc
+
+Svc -> UoW : 5.1.3.1: Tong hop thong ke
+note right: DashboardResponse gom:\ntotalTours, activeTours,\ntotalBookings, pendingBookings,\nconfirmedBookings, totalCustomers,\ntotalReviews
+
+UoW -> DB : 5.1.3.2: SELECT COUNT(*) FROM Tours\nSELECT COUNT(*) FROM Bookings\nSELECT COUNT(*) FROM Customers...
+activate DB
+DB --> UoW : 5.1.3.3: Thong ke
+deactivate DB
+
+Svc --> Ctrl : 5.1.3.4: ApiResponse.Ok(DashboardResponse)
+deactivate Svc
+
+Ctrl --> Axios : 5.1.4: HTTP 200
+deactivate Ctrl
+
+Axios --> APIClient : 5.1.5: data
+deactivate Axios
+
+APIClient --> UI : 5.1.6: ApiResponse
+deactivate APIClient
+
+UI --> Staff : 5.1.7: Hien thi doanh thu, thong ke
+deactivate UI
+
+@enduml

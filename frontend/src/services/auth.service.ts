@@ -22,4 +22,18 @@ export const authService = {
     const res = await api.post<ApiResponse<boolean>>('/Auth/change-password', data);
     return res.data;
   },
+  updateProfile: async (data: {
+    fullName: string;
+    email: string;
+    phone?: string;
+    address?: string;
+    dateOfBirth?: string;
+    gender?: string;
+    nationality?: string;
+    passportNumber?: string;
+    idCard?: string;
+  }) => {
+    const res = await api.put<ApiResponse<boolean>>('/Auth/profile', data);
+    return res.data;
+  },
 };

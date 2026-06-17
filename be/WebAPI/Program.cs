@@ -51,11 +51,12 @@ builder.Services.AddSwaggerGen(c =>
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "PMC Tour API", Version = "v1" });
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
-        Description = "JWT Authorization header using the Bearer scheme. Example: \"Bearer {token}\"",
+        Description = "JWT Authorization header using the Bearer scheme. \r\n\r\n Nhập 'Bearer' [khoảng trắng] rồi đến token của bạn.\r\n\r\nVí dụ: \"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\"",
         Name = "Authorization",
         In = ParameterLocation.Header,
         Type = SecuritySchemeType.ApiKey,
-        Scheme = "Bearer"
+        Scheme = "Bearer",
+        BearerFormat = "JWT"
     });
     c.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
@@ -66,7 +67,10 @@ builder.Services.AddSwaggerGen(c =>
                 {
                     Type = ReferenceType.SecurityScheme,
                     Id = "Bearer"
-                }
+                },
+                Scheme = "oauth2",
+                Name = "Bearer",
+                In = ParameterLocation.Header
             },
             Array.Empty<string>()
         }
@@ -122,14 +126,35 @@ using (var scope = app.Services.CreateScope())
         foreach (var u in allUsers) u.PasswordHash = hash;
         await db.SaveChangesAsync();
     }
+
+    // Ensure Customer.UserId column exists (for old databases)
+    await db.Database.ExecuteSqlRawAsync(
+        "ALTER TABLE \"Customers\" ADD COLUMN IF NOT EXISTS \"UserId\" integer NULL");
+    await db.Database.ExecuteSqlRawAsync(
+        "CREATE INDEX IF NOT EXISTS IX_Customers_UserId ON \"Customers\" (\"UserId\")");
+    // NOTE: Không tự gán UserId = Id vì Customer.Id ≠ User.Id (sẽ vi phạm FK)
+    // UserId được set đúng khi user đăng ký qua API
+
+    // Ensure Itinerary.Timeline column exists (for timeline feature)
+    await db.Database.ExecuteSqlRawAsync(
+        "ALTER TABLE \"Itineraries\" ADD COLUMN IF NOT EXISTS \"Timeline\" text NULL");
+
+    // Ensure Tour.Status column exists (for tour status feature)
+    await db.Database.ExecuteSqlRawAsync(
+        "ALTER TABLE \"Tours\" ADD COLUMN IF NOT EXISTS \"Status\" integer NOT NULL DEFAULT 0");
+
+    // Ensure ContactMessage.Phone column exists (for phone in contact feature)
+    await db.Database.ExecuteSqlRawAsync(
+        "ALTER TABLE \"ContactMessages\" ADD COLUMN IF NOT EXISTS \"Phone\" text NULL");
 }
 
 // ===== Middleware Pipeline =====
-if (app.Environment.IsDevelopment())
+app.UseSwagger();
+app.UseSwaggerUI(c =>
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "PMC Tour API v1");
+    c.RoutePrefix = string.Empty; // Hiển thị Swagger trực tiếp tại URL gốc http://localhost:5189
+});
 
 app.UseCors("AllowAll");
 
